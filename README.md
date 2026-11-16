@@ -2,38 +2,54 @@
 
 Application web installable (PWA) pour l'Hôtel du Casino de Dinant :
 horaires des femmes de chambre, répartition équitable des chambres et des tâches,
-et liste « Mes tâches » à cocher.
+et liste « Mes tâches » à cocher. Fonctionne sur iPhone (iOS 15 et plus) et Android.
 
-## Lancer l'appli sur un ordinateur
+## Publier (gratuit, comme l'appli Céline)
+
+1. Sur GitHub : **Settings → Pages → Source : « GitHub Actions »** (à faire une seule fois).
+2. Chaque modification de la branche `main` publie l'appli en 2-3 minutes sur
+   `https://<compte>.github.io/planiroom/`.
+3. Les téléphones se mettent à jour tout seuls.
+
+## Partager les données entre les téléphones
+
+Firebase Realtime Database (offre gratuite) : même principe que Céline.
+Dans GitHub : **Settings → Secrets and variables → Actions → Variables** :
+
+| Variable       | Exemple                                                     |
+| -------------- | ----------------------------------------------------------- |
+| `FIREBASE_URL` | `https://planiroom-xxxx-default-rtdb.europe-west1.firebasedatabase.app` |
+| `CODE_HOTEL`   | un code secret d'au moins 20 caractères                     |
+
+Règles Firebase : `{"rules":{"hotels":{"$code":{".read":"$code.length >= 20",".write":"$code.length >= 20"}}}}`
+
+Sans `FIREBASE_URL`, chaque téléphone garde ses propres données.
+
+## Lecture automatique des captures Shifter
+
+Le dossier `serveur/` contient le petit service qui lit les captures avec l'IA Claude.
+Il doit tourner chez un hébergeur de fonctions (la clé API doit rester secrète),
+puis son adresse va dans la variable `LECTURE_URL`. Sans elle : mode démo.
+
+## Lancer sur un ordinateur
 
 ```bash
 npm install
 npm run dev
 ```
 
-Puis ouvrir http://localhost:3000.
-
-Pour activer la lecture automatique des captures Shifter, copier `.env.example`
-en `.env.local` et y mettre une clé API Claude. Sans clé, l'appli fonctionne en
-**mode démo** (un horaire d'exemple est proposé, rien n'est payé).
-
 ## Où modifier quoi
 
 | Je veux changer…                         | Fichier                                     |
 | ---------------------------------------- | ------------------------------------------- |
-| Les couleurs, la police                  | `src/app/globals.css` (bloc `@theme`)       |
+| Les couleurs, arrondis, ombres           | `tailwind.config.ts`, `src/app/globals.css` |
 | Les données d'exemple (filles, tâches…)  | `src/lib/sampleData.ts`                     |
 | La règle de répartition                  | `src/lib/repartition.ts`                    |
-| La lecture des captures (consignes IA)   | `src/app/api/lire-horaire/route.ts`         |
-| L'enregistrement des données             | `src/lib/store.tsx`                         |
-| Les boutons, cartes, feuilles…           | `src/components/ui/index.tsx`               |
+| Le partage entre téléphones              | `src/lib/sync.ts`, `src/config.ts`          |
+| La lecture des captures (consignes IA)   | `serveur/lire-horaire.ts`                   |
+| Les boutons, cartes, fenêtres…           | `src/components/ui/index.tsx`               |
+| L'écran d'installation                   | `src/components/Installation.tsx`           |
 | Un écran                                 | `src/app/(app)/<écran>/page.tsx`            |
 
-Dans l'appli, la gouvernante peut déjà modifier les filles, chambres, tâches
-(durée, jours, pénible), durées de ménage, linge et pause : menu profil → Réglages.
-
-## Limites de la bêta
-
-- Les données sont enregistrées **sur l'appareil** (pas encore partagées entre téléphones).
-- Pas encore de mot de passe : chacune choisit son profil.
-- Ces deux points seront réglés avec une base de données en ligne (Firebase ou Supabase, offre gratuite).
+Dans l'appli, la gouvernante modifie filles, chambres, tâches (durée, jours, pénible),
+durées de ménage, linge et pause : bouton profil → Réglages.

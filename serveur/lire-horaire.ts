@@ -8,12 +8,21 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { NextResponse } from "next/server";
-import { addDays } from "@/lib/dates";
-import { HoraireLuSchema, type JourLu, type ReponseLecture } from "@/lib/lectureHoraire";
+import { addDays } from "../src/lib/dates";
+import { HoraireLuSchema, type JourLu, type ReponseLecture } from "../src/lib/lectureHoraire";
 
-export const runtime = "nodejs";
-export const maxDuration = 60;
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+function repondre(corps: ReponseLecture, status = 200) {
+  return new Response(JSON.stringify(corps), {
+    status,
+    headers: { "Content-Type": "application/json", ...CORS },
+  });
+}
 
 const MODELE = process.env.CLAUDE_MODEL || "claude-opus-5-5";
 const TYPES_IMAGE = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
@@ -61,21 +70,21 @@ function horaireDemo(lundi: string): JourLu[] {
   }));
 }
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<Response> {
   let corps: { image?: string; mediaType?: string; aujourdhui?: string; lundi?: string };
   try {
     corps = await req.json();
   } catch {
-    return NextResponse.json<ReponseLecture>({ jours: [], erreur: "Requête invalide." }, { status: 400 });
+    return repondre({ jours: [], erreur: "Requête invalide." }, 400);
   }
   const { image, mediaType, aujourdhui, lundi } = corps;
   if (!image || !mediaType || !TYPES_IMAGE.includes(mediaType as TypeImage)) {
-    return NextResponse.json<ReponseLecture>({ jours: [], erreur: "Image manquante ou format non pris en charge." }, { status: 400 });
+    return repondre({ jours: [], erreur: "Image manquante ou format non pris en charge." }, 400);
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
     await new Promise((r) => setTimeout(r, 1200)); // simule le temps de lecture
-    return NextResponse.json<ReponseLecture>({ jours: horaireDemo(lundi ?? aujourdhui ?? ""), demo: true });
+    return repondre({ jours: horaireDemo(lundi ?? aujourdhui ?? ""), demo: true });
   }
 
   const client = new Anthropic();
@@ -99,22 +108,26 @@ export async function POST(req: Request) {
     });
 
     if (reponse.stop_reason === "refusal" || !reponse.parsed_output) {
-      return NextResponse.json<ReponseLecture>(
+      return repondre(
         { jours: [], erreur: "La capture n'a pas pu être lue. Essayez une capture plus nette." },
-        { status: 422 }
+        422
       );
     }
-    return NextResponse.json<ReponseLecture>({ jours: nettoyer(reponse.parsed_output.jours) });
+    return repondre({ jours: nettoyer(reponse.parsed_output.jours) });
   } catch (e) {
     if (e instanceof Anthropic.AuthenticationError) {
-      return NextResponse.json<ReponseLecture>({ jours: [], erreur: "Clé API Claude invalide." }, { status: 500 });
+      return repondre({ jours: [], erreur: "Clé API Claude invalide." }, 500);
     }
     if (e instanceof Anthropic.RateLimitError) {
-      return NextResponse.json<ReponseLecture>({ jours: [], erreur: "Trop de demandes, réessayez dans une minute." }, { status: 429 });
+      return repondre({ jours: [], erreur: "Trop de demandes, réessayez dans une minute." }, 429);
     }
     if (e instanceof Anthropic.APIError) {
-      return NextResponse.json<ReponseLecture>({ jours: [], erreur: "Le service de lecture est indisponible." }, { status: 502 });
+      return repondre({ jours: [], erreur: "Le service de lecture est indisponible." }, 502);
     }
-    return NextResponse.json<ReponseLecture>({ jours: [], erreur: "Erreur inattendue pendant la lecture." }, { status: 500 });
+    return repondre({ jours: [], erreur: "Erreur inattendue pendant la lecture." }, 500);
   }
+}
+
+export function OPTIONS(): Response {
+  return new Response(null, { status: 204, headers: CORS });
 }

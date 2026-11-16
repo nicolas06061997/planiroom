@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowLeft, ChevronRight, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronRight, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MenuProfil, Page } from "@/components/shell";
+import { EnTete, Page } from "@/components/shell";
 import {
   Avatar,
   Bouton,
@@ -12,7 +12,6 @@ import {
   Champ,
   classeInput,
   cx,
-  EnTete,
   Feuille,
   Interrupteur,
   Pastille,
@@ -40,26 +39,17 @@ export default function ReglagesPage() {
 
   return (
     <>
-      <EnTete
-        titre="Réglages"
-        sousTitre="Tout est modifiable ici"
-        gauche={
-          <BoutonIcone label="Retour" onClick={() => router.back()} className="-ml-2">
-            <ArrowLeft className="size-5" />
-          </BoutonIcone>
-        }
-        action={<MenuProfil />}
-      />
+      <EnTete titre="Réglages" sousTitre="Tout est modifiable ici" retour="/planning/" />
       <Page>
-        <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none]">
-          <div className="inline-flex gap-1 rounded-xl bg-gray-200/70 p-1">
+        <div className="sans-barre -mx-4 overflow-x-auto px-4 pt-2">
+          <div className="inline-flex gap-1 rounded-2xl bg-gray-200/70 p-1">
             {ONGLETS.map((o) => (
               <button
                 key={o}
                 onClick={() => setOnglet(o)}
                 aria-pressed={onglet === o}
                 className={cx(
-                  "min-h-10 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition-all",
+                  "min-h-10 whitespace-nowrap rounded-xl px-4 text-sm font-semibold transition-all",
                   onglet === o ? "bg-white text-encre shadow-carte" : "text-doux hover:text-texte"
                 )}
               >

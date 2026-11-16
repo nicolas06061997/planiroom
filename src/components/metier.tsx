@@ -29,8 +29,8 @@ export function BarreCharge({ charge, capacite }: { charge: number; capacite: nu
   const pct = capacite > 0 ? Math.round((charge / capacite) * 100) : 0;
   return (
     <div>
-      <div className="mb-1.5 flex items-baseline justify-between text-[13px]">
-        <span className="font-medium text-encre">
+      <div className="mb-2 flex items-baseline justify-between text-[14px]">
+        <span className="font-semibold text-encre">
           {formatDuree(charge)} <span className="font-normal text-doux">sur {formatDuree(capacite)}</span>
         </span>
         <span className={depasse ? "font-semibold text-conge" : "text-doux"}>{pct} %</span>

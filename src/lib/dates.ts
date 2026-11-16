@@ -127,3 +127,17 @@ export function formatHeure(h: Heure | null): string {
   const [hh, mm] = h.split(":");
   return `${Number(hh)}h${mm}`;
 }
+
+/** "16 – 22 nov." (sans l'année) */
+export function formatSemaineCourte(monday: ISODate): string {
+  const a = fromISO(monday);
+  const b = fromISO(addDays(monday, 6));
+  if (a.getMonth() === b.getMonth()) return `${a.getDate()} – ${b.getDate()} ${MOIS_COURTS[b.getMonth()]}`;
+  return `${a.getDate()} ${MOIS_COURTS[a.getMonth()]} – ${b.getDate()} ${MOIS_COURTS[b.getMonth()]}`;
+}
+
+/** "Lundi 16 nov." */
+export function formatJourMoyen(iso: ISODate): string {
+  const d = fromISO(iso);
+  return `${JOURS_LONGS[jourSemaine(iso)]} ${d.getDate()} ${MOIS_COURTS[d.getMonth()]}`;
+}

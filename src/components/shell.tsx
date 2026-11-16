@@ -1,26 +1,39 @@
 "use client";
 
-import { CalendarClock, CalendarDays, ListChecks, LogOut, Settings, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarClock,
+  CalendarDays,
+  Cloud,
+  CloudOff,
+  ListChecks,
+  LogOut,
+  RefreshCw,
+  Settings,
+  ShieldCheck,
+  Smartphone,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { BASE, PARTAGE_ACTIF, VERSION } from "@/config";
 import { useStore } from "@/lib/store";
-import { Avatar, cx, Feuille } from "./ui";
+import { EcranInstallation, estInstallee } from "./Installation";
+import { Avatar, BoutonIcone, cx, Feuille } from "./ui";
 
 const ONGLETS = [
-  { href: "/horaire", label: "Horaire", icone: CalendarClock, actifSi: ["/horaire"] },
-  { href: "/planning", label: "Planning", icone: CalendarDays, actifSi: ["/planning", "/repartition"] },
-  { href: "/mes-taches", label: "Mes tâches", icone: ListChecks, actifSi: ["/mes-taches"] },
+  { href: "/horaire/", label: "Horaire", icone: CalendarClock, actifSi: ["/horaire"] },
+  { href: "/planning/", label: "Planning", icone: CalendarDays, actifSi: ["/planning", "/repartition"] },
+  { href: "/mes-taches/", label: "Mes tâches", icone: ListChecks, actifSi: ["/mes-taches"] },
 ];
+
+/* ---------- Barre de navigation du bas ---------- */
 
 export function BarreNavigation() {
   const pathname = usePathname();
   return (
-    <nav
-      aria-label="Navigation principale"
-      className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-bord bg-white/95 backdrop-blur-md"
-    >
-      <ul className="mx-auto grid max-w-2xl grid-cols-3">
+    <nav aria-label="Navigation principale" className="verre-blanc pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-black/5 shadow-nav">
+      <ul className="mx-auto grid max-w-2xl grid-cols-3 px-2">
         {ONGLETS.map(({ href, label, icone: Icone, actifSi }) => {
           const actif = actifSi.some((p) => pathname.startsWith(p));
           return (
@@ -29,17 +42,17 @@ export function BarreNavigation() {
                 href={href}
                 aria-current={actif ? "page" : undefined}
                 className={cx(
-                  "flex min-h-16 flex-col items-center justify-center gap-1 text-[12px] font-medium transition-colors",
-                  actif ? "text-primaire" : "text-doux hover:text-texte"
+                  "flex min-h-18 flex-col items-center justify-center gap-1 text-[12px] font-semibold transition-colors",
+                  actif ? "text-primaire" : "text-doux"
                 )}
               >
                 <span
                   className={cx(
-                    "flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-200",
-                    actif && "bg-primaire-clair"
+                    "flex h-8 w-16 items-center justify-center rounded-full transition-all duration-200",
+                    actif ? "bg-primaire-clair" : "bg-transparent"
                   )}
                 >
-                  <Icone className="size-5.5" strokeWidth={actif ? 2.25 : 1.9} />
+                  <Icone className="h-5.5 w-5.5" strokeWidth={actif ? 2.3 : 1.9} />
                 </span>
                 {label}
               </Link>
@@ -51,11 +64,74 @@ export function BarreNavigation() {
   );
 }
 
-/** Pastille de profil en haut à droite, avec menu. */
+/* ---------- En-tête ---------- */
+
+export function EnTete({
+  titre,
+  sousTitre,
+  retour,
+}: {
+  /** Sans titre : affiche la marque Planiroom. */
+  titre?: string;
+  sousTitre?: string;
+  /** Adresse du bouton retour. */
+  retour?: string;
+}) {
+  const router = useRouter();
+  return (
+    <header className="verre pt-safe sticky top-0 z-20">
+      <div className="mx-auto flex min-h-16 max-w-2xl items-center gap-2 px-4">
+        {retour && (
+          <BoutonIcone label="Retour" onClick={() => router.push(retour)} className="-ml-2">
+            <ArrowLeft className="h-5.5 w-5.5" />
+          </BoutonIcone>
+        )}
+        <div className="min-w-0 flex-1">
+          {titre ? (
+            <>
+              <h1 className="truncate text-lg font-bold tracking-tight text-encre">{titre}</h1>
+              {sousTitre && <p className="truncate text-[13px] text-doux">{sousTitre}</p>}
+            </>
+          ) : (
+            <div className="flex items-center gap-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`${BASE}/icon.svg`} alt="" className="h-8 w-8 rounded-[10px]" />
+              <span className="text-xl font-extrabold tracking-tight text-encre">Planiroom</span>
+              <PuceSynchro />
+            </div>
+          )}
+        </div>
+        <MenuProfil />
+      </div>
+    </header>
+  );
+}
+
+/** « Partagé » / « Hors ligne » / « Ce téléphone » à côté du nom de l'appli. */
+function PuceSynchro() {
+  const { synchro } = useStore();
+  if (synchro === "local") return null;
+  const ok = synchro === "partage";
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+        ok ? "bg-primaire-clair text-primaire" : synchro === "connexion" ? "bg-gray-100 text-doux" : "bg-conge-clair text-conge"
+      )}
+    >
+      {ok ? <Cloud className="h-3 w-3" /> : synchro === "connexion" ? <RefreshCw className="h-3 w-3 animate-spin" /> : <CloudOff className="h-3 w-3" />}
+      {ok ? "Partagé" : synchro === "connexion" ? "Connexion" : "Hors ligne"}
+    </span>
+  );
+}
+
+/* ---------- Profil ---------- */
+
 export function MenuProfil() {
-  const { session, setSession, donnees } = useStore();
+  const { session, setSession, donnees, synchro } = useStore();
   const router = useRouter();
   const [ouvert, setOuvert] = useState(false);
+  const [install, setInstall] = useState(false);
   if (!session) return null;
   const employee = donnees.employees.find((e) => e.id === session.employeeId);
   const nom = session.role === "gouvernante" ? "Gouvernante" : employee?.prenom ?? "";
@@ -64,42 +140,53 @@ export function MenuProfil() {
   return (
     <>
       <button
+        type="button"
         onClick={() => setOuvert(true)}
         aria-label="Mon profil"
-        className="flex size-11 items-center justify-center rounded-full transition-transform active:scale-95"
+        className="flex h-11 w-11 items-center justify-center rounded-full transition active:scale-95"
       >
         {session.role === "gouvernante" ? (
-          <span className="flex size-9 items-center justify-center rounded-full bg-primaire text-white">
-            <UserRound className="size-4.5" />
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primaire text-white shadow-bouton">
+            <ShieldCheck className="h-5 w-5" />
           </span>
         ) : (
-          <Avatar prenom={nom} couleur={couleur} taille={36} />
+          <Avatar prenom={nom} couleur={couleur} taille={40} />
         )}
       </button>
       <Feuille ouverte={ouvert} onFermer={() => setOuvert(false)} titre="Mon profil">
-        <div className="mb-4 flex items-center gap-3 rounded-2xl bg-fond p-3">
-          <Avatar prenom={nom} couleur={couleur} taille={44} />
-          <div>
-            <p className="font-semibold text-encre">{nom}</p>
-            <p className="text-[13px] text-doux">
-              {session.role === "gouvernante" ? "Administratrice" : "Femme de chambre"}
-            </p>
+        <div className="mb-4 flex items-center gap-3.5 rounded-3xl bg-fond p-4">
+          <Avatar prenom={nom} couleur={couleur} taille={48} />
+          <div className="min-w-0 flex-1">
+            <p className="text-[17px] font-bold text-encre">{nom}</p>
+            <p className="text-[13px] text-doux">{session.role === "gouvernante" ? "Administratrice" : "Femme de chambre"}</p>
           </div>
         </div>
         <div className="flex flex-col gap-1">
           {session.role === "gouvernante" && (
             <LigneMenu
-              icone={<Settings className="size-5" />}
+              icone={<Settings className="h-5 w-5" />}
               onClick={() => {
                 setOuvert(false);
-                router.push("/reglages");
+                router.push("/reglages/");
               }}
             >
-              Réglages (filles, chambres, tâches)
+              Réglages
+              <span className="block text-[13px] font-normal text-doux">Filles, chambres, tâches, durées</span>
+            </LigneMenu>
+          )}
+          {!estInstallee() && (
+            <LigneMenu
+              icone={<Smartphone className="h-5 w-5" />}
+              onClick={() => {
+                setOuvert(false);
+                setInstall(true);
+              }}
+            >
+              Installer l&apos;appli sur ce téléphone
             </LigneMenu>
           )}
           <LigneMenu
-            icone={<LogOut className="size-5" />}
+            icone={<LogOut className="h-5 w-5" />}
             onClick={() => {
               setSession(null);
               router.replace("/");
@@ -108,32 +195,89 @@ export function MenuProfil() {
             Changer de profil
           </LigneMenu>
         </div>
+        <p className="mt-5 text-center text-xs text-pale">
+          {PARTAGE_ACTIF
+            ? synchro === "partage"
+              ? "Données partagées avec toute l'équipe"
+              : "Connexion au partage…"
+            : "Bêta · données enregistrées sur ce téléphone"}
+          {" · "}v{VERSION}
+        </p>
       </Feuille>
+      {install && <EcranInstallation onFermer={() => setInstall(false)} />}
     </>
   );
 }
 
-function LigneMenu({
-  icone,
-  children,
-  onClick,
-}: {
-  icone: ReactNode;
-  children: ReactNode;
-  onClick: () => void;
-}) {
+function LigneMenu({ icone, children, onClick }: { icone: ReactNode; children: ReactNode; onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="flex min-h-13 items-center gap-3 rounded-xl px-3 text-left text-[15px] font-medium text-encre hover:bg-fond active:bg-gray-100"
+      className="flex min-h-14 items-center gap-3.5 rounded-2xl px-3 py-2 text-left text-[15px] font-semibold text-encre transition hover:bg-fond active:bg-gray-100"
     >
-      <span className="text-doux">{icone}</span>
-      {children}
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-fond text-texte">{icone}</span>
+      <span className="flex-1">{children}</span>
     </button>
   );
 }
 
-/** Enveloppe des écrans connectés : vérifie le profil et affiche la barre du bas. */
+/* ---------- Mise à jour automatique (comme dans Céline) ---------- */
+
+function useMiseAJour() {
+  const [dispo, setDispo] = useState(false);
+  useEffect(() => {
+    if (VERSION === "dev") return;
+    const verifier = async () => {
+      try {
+        const r = await fetch(`${BASE}/version.json?t=${Date.now()}`, { cache: "no-store" });
+        const { v } = (await r.json()) as { v: string };
+        if (v && v !== VERSION) {
+          // Recharge toute seule une fois par version, sinon bandeau.
+          const cle = "planiroom:maj";
+          let deja: string | null = null;
+          try {
+            deja = sessionStorage.getItem(cle);
+          } catch {}
+          if (deja !== v) {
+            try {
+              sessionStorage.setItem(cle, v);
+            } catch {}
+            window.location.reload();
+          } else setDispo(true);
+        }
+      } catch {}
+    };
+    verifier();
+    const t = setInterval(verifier, 5 * 60_000);
+    const vis = () => document.visibilityState === "visible" && verifier();
+    document.addEventListener("visibilitychange", vis);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", vis);
+    };
+  }, []);
+  return dispo;
+}
+
+function BandeauMiseAJour() {
+  const dispo = useMiseAJour();
+  if (!dispo) return null;
+  return (
+    <div className="pt-safe fixed inset-x-0 top-0 z-40 flex justify-center px-4">
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="mt-3 flex animate-apparition items-center gap-2 rounded-full bg-encre px-5 py-3 text-sm font-semibold text-white shadow-flottant"
+      >
+        <RefreshCw className="h-4 w-4" /> Nouvelle version disponible · Mettre à jour
+      </button>
+    </div>
+  );
+}
+
+/* ---------- Enveloppe des écrans connectés ---------- */
+
 export function Coquille({ children }: { children: ReactNode }) {
   const { pret, session } = useStore();
   const router = useRouter();
@@ -144,22 +288,28 @@ export function Coquille({ children }: { children: ReactNode }) {
 
   if (!pret || !session) return <Chargement />;
   return (
-    <div className="min-h-dvh pb-[calc(5rem+env(safe-area-inset-bottom))]">
+    <div className="min-h-ecran pb-nav">
       {children}
       <BarreNavigation />
+      <BandeauMiseAJour />
     </div>
   );
 }
 
 export function Chargement() {
   return (
-    <div className="flex min-h-dvh items-center justify-center">
-      <div className="size-8 animate-spin rounded-full border-3 border-primaire/20 border-t-primaire" />
+    <div className="min-h-ecran flex items-center justify-center">
+      <div className="h-9 w-9 animate-spin rounded-full border-3 border-primaire/20 border-t-primaire" />
     </div>
   );
 }
 
 /** Contenu centré d'une page. */
 export function Page({ children, className }: { children: ReactNode; className?: string }) {
-  return <main className={cx("mx-auto max-w-2xl px-4 pt-4", className)}>{children}</main>;
+  return <main className={cx("mx-auto max-w-2xl px-4 pt-2", className)}>{children}</main>;
+}
+
+/** Barre d'actions collée au-dessus de la navigation. */
+export function BarreActions({ children }: { children: ReactNode }) {
+  return <div className="bottom-nav sticky z-10 mt-6 flex gap-2.5 pb-3">{children}</div>;
 }

@@ -13,8 +13,9 @@ export function SelecteurFille({
 }) {
   const { donnees } = useStore();
   return (
-    <div className="-mx-4 mb-1 overflow-x-auto px-4 [scrollbar-width:none]">
+    <div className="sans-barre -mx-4 mb-3 overflow-x-auto px-4">
       <div className="flex gap-2 py-1">
+        <span className="sr-only">Choisir une fille</span>
         {donnees.employees
           .filter((e) => e.actif)
           .map((e) => {
@@ -25,14 +26,14 @@ export function SelecteurFille({
                 onClick={() => onChange(e.id)}
                 aria-pressed={actif}
                 className={cx(
-                  "flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors",
+                  "flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition active:scale-95",
                   actif
                     ? "border-primaire bg-primaire text-white"
                     : "border-bord bg-white text-texte hover:bg-gray-50"
                 )}
               >
                 <span
-                  className="size-2 rounded-full"
+                  className="h-2 w-2 rounded-full"
                   style={{ background: actif ? "white" : e.couleur }}
                 />
                 {e.prenom}

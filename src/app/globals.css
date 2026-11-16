@@ -1,72 +1,60 @@
-@import "tailwindcss";
-
-/* Couleurs et styles de base de l'appli. Modifier ici change tout l'écran. */
-@theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-
-  --color-fond: #f5f6f8;
-  --color-carte: #ffffff;
-  --color-bord: #e6e8ec;
-  --color-encre: #111827;
-  --color-texte: #374151;
-  --color-doux: #6b7280;
-  --color-pale: #9ca3af;
-
-  --color-primaire: #0f766e;
-  --color-primaire-fonce: #115e59;
-  --color-primaire-clair: #e6f4f2;
-
-  --color-conge: #ea580c;
-  --color-conge-clair: #fff4ec;
-
-  --color-depart: #b91c1c;
-  --color-depart-clair: #fdecec;
-  --color-arrivee: #1d4ed8;
-  --color-arrivee-clair: #ebf1fe;
-  --color-raff: #047857;
-  --color-raff-clair: #e8f6f0;
-
-  --shadow-carte: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
-  --shadow-flottant: 0 8px 24px rgb(16 24 40 / 0.12), 0 2px 6px rgb(16 24 40 / 0.06);
-
-  --animate-apparition: apparition 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  --animate-monte: monte 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  --animate-fondu: fondu 200ms ease-out both;
-
-  @keyframes apparition {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: none; }
-  }
-  @keyframes monte {
-    from { transform: translateY(100%); }
-    to { transform: none; }
-  }
-  @keyframes fondu {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  background: #f5f6f8;
 }
 
 body {
-  background: var(--color-fond);
-  color: var(--color-texte);
-  font-family: var(--font-sans);
+  background: #f5f6f8;
+  color: #374151;
   font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 1ms !important;
-    transition-duration: 1ms !important;
-  }
-}
+/* Hauteur d'écran fiable sur tous les téléphones (avec repli pour les anciens). */
+.min-h-ecran { min-height: 100vh; }
+@supports (min-height: 100dvh) { .min-h-ecran { min-height: 100dvh; } }
+.max-h-feuille { max-height: 88vh; }
+@supports (max-height: 88dvh) { .max-h-feuille { max-height: 88dvh; } }
 
 /* Zones de sécurité iPhone (encoche, barre du bas) */
-.pt-safe { padding-top: env(safe-area-inset-top); }
-.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pb-nav { padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px)); }
+.bottom-nav { bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px)); }
+
+/* Défilement horizontal sans barre */
+.sans-barre { scrollbar-width: none; }
+.sans-barre::-webkit-scrollbar { display: none; }
+
+/* Flou derrière l'en-tête si le téléphone le permet */
+.verre { background: rgba(245, 246, 248, 0.97); }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .verre { background: rgba(245, 246, 248, 0.82); -webkit-backdrop-filter: saturate(180%) blur(14px); backdrop-filter: saturate(180%) blur(14px); }
+}
+.verre-blanc { background: rgba(255, 255, 255, 0.98); }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .verre-blanc { background: rgba(255, 255, 255, 0.88); -webkit-backdrop-filter: saturate(180%) blur(14px); backdrop-filter: saturate(180%) blur(14px); }
+}
+
+/* Carte d'accueil (dégradé + formes douces) */
+.hero {
+  background-color: #0f766e;
+  background-image:
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.16) 0, rgba(255, 255, 255, 0) 45%),
+    radial-gradient(circle at 0% 100%, rgba(0, 0, 0, 0.18) 0, rgba(0, 0, 0, 0) 55%),
+    linear-gradient(135deg, #12857c 0%, #0f766e 45%, #0b4f4a 100%);
+}
+
+input[type="time"] { -webkit-appearance: none; appearance: none; }
+input[type="time"]::-webkit-date-and-time-value { text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}

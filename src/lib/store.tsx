@@ -14,12 +14,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { mondayOf } from "./dates";
 import { repartir } from "./repartition";
 import { creerDonneesExemple, DATA_VERSION } from "./sampleData";
+import { Synchro, type EtatSynchro } from "./sync";
 import type { CarteFille, Donnees, ISODate, Session, Shift } from "./types";
 
 const CLE_DONNEES = "planiroom:donnees";
@@ -51,6 +53,8 @@ function charger(): Donnees {
 
 interface StoreValue {
   pret: boolean;
+  /** Partage entre téléphones : local, connexion, partage, horsligne. */
+  synchro: EtatSynchro;
   donnees: Donnees;
   session: Session | null;
   setSession: (s: Session | null) => void;
@@ -69,15 +73,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [pret, setPret] = useState(false);
   const [donnees, setDonnees] = useState<Donnees>(() => creerDonneesExemple());
   const [session, setSessionState] = useState<Session | null>(null);
+  const [synchro, setSynchro] = useState<EtatSynchro>("local");
+  const sync = useRef<Synchro | null>(null);
 
   useEffect(() => {
-    setDonnees(charger());
+    const locales = charger();
+    setDonnees(locales);
     setSessionState(lire<Session>(CLE_SESSION));
     setPret(true);
+    const s = new Synchro(setDonnees, setSynchro);
+    sync.current = s;
+    s.demarrer(locales);
+    return () => s.arreter();
   }, []);
 
   useEffect(() => {
-    if (pret) ecrire(CLE_DONNEES, donnees);
+    if (!pret) return;
+    ecrire(CLE_DONNEES, donnees);
+    sync.current?.local(donnees);
   }, [donnees, pret]);
 
   const setSession = useCallback((s: Session | null) => {
@@ -159,6 +172,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<StoreValue>(
     () => ({
       pret,
+      synchro,
       donnees,
       session,
       setSession,
@@ -171,6 +185,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       pret,
+      synchro,
       donnees,
       session,
       setSession,

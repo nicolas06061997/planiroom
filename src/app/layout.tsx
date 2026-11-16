@@ -2,16 +2,18 @@ import "@fontsource-variable/inter";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { EnregistrementSW } from "@/components/EnregistrementSW";
+import { BASE } from "@/config";
 import { StoreProvider } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "Planiroom – Hôtel du Casino",
   description: "Planning ménage de l'Hôtel du Casino de Dinant",
-  manifest: "/manifest.webmanifest",
+  manifest: `${BASE}/manifest.webmanifest`,
   appleWebApp: { capable: true, title: "Planiroom", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: "/apple-touch-icon.png",
+    icon: [{ url: `${BASE}/icon.svg`, type: "image/svg+xml" }, { url: `${BASE}/icon-192.png`, sizes: "192x192" }],
+    apple: `${BASE}/apple-touch-icon.png`,
   },
 };
 
@@ -25,7 +27,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>
+      <body className="font-sans">
         <StoreProvider>{children}</StoreProvider>
         <EnregistrementSW />
       </body>
