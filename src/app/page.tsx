@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { InstallationAuto } from "@/components/Installation";
 import { Chargement } from "@/components/shell";
 import { Avatar } from "@/components/ui";
-import { BASE } from "@/config";
+import { BASE, NOM_APPLI } from "@/config";
 import { formatJourLong, today } from "@/lib/dates";
 import { useStore } from "@/lib/store";
 import type { Session } from "@/lib/types";
@@ -37,7 +37,10 @@ export default function Accueil() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={`${BASE}/icon.svg`} alt="" className="h-16 w-16 rounded-2xl shadow-flottant ring-4 ring-white/20" />
           <p className="mt-7 text-[13px] font-semibold uppercase tracking-wider text-white/70">Hôtel du Casino · Dinant</p>
-          <h1 className="mt-1 text-[34px] font-extrabold leading-tight tracking-tight">Planiroom</h1>
+          <h1 className="mt-1 text-[34px] font-extrabold leading-[1.05] tracking-tight">
+            {NOM_APPLI.split(" ")[0]}
+            <span className="block text-white/80">{NOM_APPLI.split(" ").slice(1).join(" ")}</span>
+          </h1>
           <p className="mt-1 text-[17px] text-white/85">{formatJourLong(today())}</p>
         </div>
       </div>

@@ -1,4 +1,6 @@
-# Planiroom
+# Housekeeping Infinit
+
+Nom de l'appli : « Housekeeping Infinit » (constante `NOM_APPLI` dans `src/config.ts`). Le dépôt s'appelle encore `planiroom`.
 
 Appli de planning ménage (PWA) pour l'Hôtel du Casino de Dinant : 5 femmes de chambre + 1 gouvernante.
 L'utilisateur parle français et n'est pas développeur : réponses courtes, en français, étape par étape.

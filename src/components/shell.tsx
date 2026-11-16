@@ -17,6 +17,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { BASE, PARTAGE_ACTIF, VERSION } from "@/config";
+import { Marque } from "./Marque";
 import { useStore } from "@/lib/store";
 import { EcranInstallation, estInstallee } from "./Installation";
 import { Avatar, BoutonIcone, cx, Feuille } from "./ui";
@@ -71,7 +72,7 @@ export function EnTete({
   sousTitre,
   retour,
 }: {
-  /** Sans titre : affiche la marque Planiroom. */
+  /** Sans titre : affiche le nom de l'appli. */
   titre?: string;
   sousTitre?: string;
   /** Adresse du bouton retour. */
@@ -96,8 +97,10 @@ export function EnTete({
             <div className="flex items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`${BASE}/icon.svg`} alt="" className="h-8 w-8 rounded-[10px]" />
-              <span className="text-xl font-extrabold tracking-tight text-encre">Planiroom</span>
-              <PuceSynchro />
+              <Marque className="text-lg xs:text-xl" />
+              <span className="hidden xs:inline-flex">
+                <PuceSynchro />
+              </span>
             </div>
           )}
         </div>

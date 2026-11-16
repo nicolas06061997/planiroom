@@ -1,4 +1,4 @@
-# Planiroom – Planning ménage (bêta)
+# Housekeeping Infinit – Planning ménage (bêta)
 
 Application web installable (PWA) pour l'Hôtel du Casino de Dinant :
 horaires des femmes de chambre, répartition équitable des chambres et des tâches,

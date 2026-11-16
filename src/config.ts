@@ -13,6 +13,11 @@ export const FIREBASE_URL = (process.env.NEXT_PUBLIC_FIREBASE_URL || "").replace
 export const CODE_HOTEL = process.env.NEXT_PUBLIC_CODE_HOTEL || "hotel-casino-dinant-planiroom-2026";
 export const LECTURE_URL = process.env.NEXT_PUBLIC_LECTURE_URL || "";
 
+/** Nom de l'appli (affiché partout). */
+export const NOM_APPLI = "Housekeeping Infinit";
+/** Nom court, sous l'icône sur l'écran d'accueil du téléphone (environ 12 lettres maximum). */
+export const NOM_COURT = "Housekeeping";
+
 /** Préfixe d'adresse quand l'appli est publiée dans un sous-dossier (GitHub Pages). */
 export const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 

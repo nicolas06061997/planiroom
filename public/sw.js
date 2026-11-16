@@ -1,4 +1,4 @@
-// Service worker de Planiroom.
+// Service worker de Housekeeping Infinit.
 // - Fichiers de l'appli (_next/static) : gardés en cache, ils ne changent jamais.
 // - Pages : réseau d'abord (toujours la dernière version), cache si pas de réseau.
 // - Données Firebase et version.json : jamais mises en cache ici.

@@ -2,14 +2,15 @@ import "@fontsource-variable/inter";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { EnregistrementSW } from "@/components/EnregistrementSW";
-import { BASE } from "@/config";
+import { BASE, NOM_APPLI, NOM_COURT } from "@/config";
 import { StoreProvider } from "@/lib/store";
 
 export const metadata: Metadata = {
-  title: "Planiroom – Hôtel du Casino",
+  title: `${NOM_APPLI} – Hôtel du Casino`,
   description: "Planning ménage de l'Hôtel du Casino de Dinant",
   manifest: `${BASE}/manifest.webmanifest`,
-  appleWebApp: { capable: true, title: "Planiroom", statusBarStyle: "default" },
+  applicationName: NOM_APPLI,
+  appleWebApp: { capable: true, title: NOM_COURT, statusBarStyle: "default" },
   formatDetection: { telephone: false },
   icons: {
     icon: [{ url: `${BASE}/icon.svg`, type: "image/svg+xml" }, { url: `${BASE}/icon-192.png`, sizes: "192x192" }],

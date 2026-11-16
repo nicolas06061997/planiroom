@@ -8,7 +8,7 @@
  */
 import { Compass, Download, EllipsisVertical, Menu, PlusSquare, Share, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { BASE } from "@/config";
+import { BASE, NOM_APPLI } from "@/config";
 import { Bouton } from "./ui";
 
 interface InvitationInstall extends Event {
@@ -99,7 +99,7 @@ export function EcranInstallation({ onFermer }: { onFermer: () => void }) {
         </button>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`${BASE}/icon.svg`} alt="" className="h-16 w-16 rounded-2xl shadow-flottant ring-4 ring-white/20" />
-        <h2 className="mt-5 text-[28px] font-bold leading-tight tracking-tight">Installez Planiroom</h2>
+        <h2 className="mt-5 text-[28px] font-bold leading-tight tracking-tight">Installez {NOM_APPLI}</h2>
         <p className="mt-2 max-w-sm text-[15px] text-white/80">
           L&apos;appli s&apos;ouvrira comme une vraie application, en plein écran, depuis l&apos;écran d&apos;accueil du téléphone.
         </p>
