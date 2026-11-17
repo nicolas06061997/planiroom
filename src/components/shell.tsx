@@ -3,6 +3,7 @@
 import {
   ArrowLeft,
   CalendarClock,
+  House,
   CalendarDays,
   Cloud,
   CloudOff,
@@ -23,11 +24,12 @@ import { useTotalNonLus } from "@/lib/messages";
 import { moiDe, useStore } from "@/lib/store";
 import { AlerteMessages } from "./AlerteMessages";
 import { LigneNotifications } from "./CarteNotifications";
+import { FeuilleApparence, FondEcran } from "./Apparence";
 import { EcranInstallation, estInstallee } from "./Installation";
 import { Avatar, BoutonIcone, cx, Feuille } from "./ui";
 
 const ONGLETS = [
-  { href: "/horaire/", label: "Horaire", icone: CalendarClock, actifSi: ["/horaire"] },
+  { href: "/horaire/", label: "Horaire", icone: House, actifSi: ["/horaire"] },
   { href: "/planning/", label: "Planning", icone: CalendarDays, actifSi: ["/planning", "/repartition"] },
   { href: "/mes-taches/", label: "Mes tâches", icone: ListChecks, actifSi: ["/mes-taches"] },
   { href: "/messages/", label: "Messages", icone: MessageCircle, actifSi: ["/messages"] },
@@ -91,33 +93,45 @@ export function EnTete({
   retour?: string;
 }) {
   const router = useRouter();
+  const [couleurs, setCouleurs] = useState(false);
   return (
-    <header className="verre pt-safe sticky top-0 z-20">
-      <div className="mx-auto flex min-h-16 max-w-2xl items-center gap-2 px-4">
+    <header className="pt-safe relative z-20">
+      <div className="mx-auto flex min-h-[4.5rem] max-w-2xl items-center gap-2 px-4">
         {retour && (
-          <BoutonIcone label="Retour" onClick={() => router.push(retour)} className="-ml-2">
+          <BoutonIcone label="Retour" onClick={() => router.push(retour)} className="-ml-1 bg-white/80 shadow-carte">
             <ArrowLeft className="h-5.5 w-5.5" />
           </BoutonIcone>
         )}
         <div className="min-w-0 flex-1">
           {titre ? (
-            <>
-              <h1 className="truncate text-lg font-bold tracking-tight text-encre">{titre}</h1>
+            <div className="verre-blanc inline-block max-w-full rounded-2xl px-4 py-2 shadow-carte">
+              <h1 className="truncate text-[17px] font-bold tracking-tight text-encre">{titre}</h1>
               {sousTitre && <p className="truncate text-[13px] text-doux">{sousTitre}</p>}
-            </>
+            </div>
           ) : (
-            <div className="flex items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${BASE}/icon.svg`} alt="" className="h-8 w-8 rounded-[10px]" />
-              <Marque className="text-lg xs:text-xl" />
-              <span className="hidden sm:inline-flex">
+            <div className="verre-blanc inline-block max-w-full rounded-2xl px-4 py-2 shadow-carte">
+              {/* Petit écran : le nom sur deux lignes ; sinon nom + « ✨ partagé » */}
+              <span className="block xs:hidden">
+                <Marque className="block text-[16px] leading-tight" deuxLignes />
+              </span>
+              <span className="hidden xs:block">
+                <Marque className="block truncate text-lg" />
                 <PuceSynchro />
               </span>
             </div>
           )}
         </div>
+        <button
+          type="button"
+          aria-label="Couleurs"
+          onClick={() => setCouleurs(true)}
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[22px] shadow-carte transition active:scale-95"
+        >
+          🎨
+        </button>
         <MenuProfil />
       </div>
+      <FeuilleApparence ouverte={couleurs} onFermer={() => setCouleurs(false)} />
     </header>
   );
 }
@@ -125,19 +139,9 @@ export function EnTete({
 /** « Partagé » / « Hors ligne » / « Ce téléphone » à côté du nom de l'appli. */
 function PuceSynchro() {
   const { synchro } = useStore();
-  if (synchro === "local") return null;
-  const ok = synchro === "partage";
-  return (
-    <span
-      className={cx(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-        ok ? "bg-primaire-clair text-primaire" : synchro === "connexion" ? "bg-gray-100 text-doux" : "bg-conge-clair text-conge"
-      )}
-    >
-      {ok ? <Cloud className="h-3 w-3" /> : synchro === "connexion" ? <RefreshCw className="h-3 w-3 animate-spin" /> : <CloudOff className="h-3 w-3" />}
-      {ok ? "Partagé" : synchro === "connexion" ? "Connexion" : "Hors ligne"}
-    </span>
-  );
+  const texte =
+    synchro === "partage" ? "✨ partagé" : synchro === "connexion" ? "Connexion…" : synchro === "horsligne" ? "Hors ligne" : "✨ sur ce téléphone";
+  return <span className={cx("block text-[12px] font-medium", synchro === "horsligne" ? "text-conge" : "text-doux")}>{texte}</span>;
 }
 
 /* ---------- Profil ---------- */
@@ -150,23 +154,17 @@ export function MenuProfil() {
   if (!session) return null;
   const employee = donnees.employees.find((e) => e.id === session.employeeId);
   const nom = session.role === "gouvernante" ? "Gouvernante" : employee?.prenom ?? "";
-  const couleur = employee?.couleur ?? "#0F766E";
+  const couleur = employee?.couleur ?? "#4B5563";
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOuvert(true)}
-        aria-label="Mon profil"
-        className="flex h-11 w-11 items-center justify-center rounded-full transition active:scale-95"
+        aria-label="Réglages et profil"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[22px] shadow-carte transition active:scale-95"
       >
-        {session.role === "gouvernante" ? (
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primaire text-white shadow-bouton">
-            <ShieldCheck className="h-5 w-5" />
-          </span>
-        ) : (
-          <Avatar prenom={nom} couleur={couleur} taille={40} />
-        )}
+        ⚙️
       </button>
       <Feuille ouverte={ouvert} onFermer={() => setOuvert(false)} titre="Mon profil">
         <div className="mb-4 flex items-center gap-3.5 rounded-3xl bg-fond p-4">
@@ -306,7 +304,8 @@ export function Coquille({ children }: { children: ReactNode }) {
 
   if (!pret || !session) return <Chargement />;
   return (
-    <div className={cx("min-h-ecran", !pleinEcran && "pb-nav")}>
+    <div className={cx("min-h-ecran relative isolate", !pleinEcran && "pb-nav")}>
+      <FondEcran />
       {children}
       {!pleinEcran && <BarreNavigation />}
       <AlerteMessages />

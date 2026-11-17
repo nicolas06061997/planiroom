@@ -6,6 +6,7 @@
  */
 import { X } from "lucide-react";
 import { useEffect, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 export function cx(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -120,9 +121,10 @@ export function CarteAccueil({
 }) {
   return (
     <section className={cx("hero relative overflow-hidden rounded-4xl p-5 text-white shadow-flottant", className)}>
-      {/* Formes décoratives discrètes */}
-      <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
-      <span aria-hidden className="pointer-events-none absolute -bottom-16 right-16 h-32 w-32 rounded-full bg-white/[0.06]" />
+      {/* Cercles décoratifs (comme sur la maquette) */}
+      <span aria-hidden className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full border-[14px] border-white/15" />
+      <span aria-hidden className="pointer-events-none absolute right-24 top-14 h-12 w-12 rounded-full border-[6px] border-white/15" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-14 right-10 h-32 w-32 rounded-full bg-white/[0.07]" />
       <div className="relative flex items-start gap-4">
         <div className="min-w-0 flex-1">
           {surtitre && <p className="text-[13px] font-semibold uppercase tracking-wider text-white/70">{surtitre}</p>}
@@ -170,7 +172,7 @@ export function Anneau({
   return (
     <div className="relative shrink-0" style={{ width: taille, height: taille }}>
       <svg width={taille} height={taille} style={{ transform: "rotate(-90deg)" }} aria-hidden>
-        <circle cx={taille / 2} cy={taille / 2} r={r} fill="none" strokeWidth={epaisseur} stroke={clair ? "rgba(255,255,255,0.2)" : "#E6F4F2"} />
+        <circle cx={taille / 2} cy={taille / 2} r={r} fill="none" strokeWidth={epaisseur} stroke={clair ? "rgba(255,255,255,0.22)" : "rgb(var(--c-clair, 247 236 235))"} />
         <circle
           cx={taille / 2}
           cy={taille / 2}
@@ -178,7 +180,7 @@ export function Anneau({
           fill="none"
           strokeWidth={epaisseur}
           strokeLinecap="round"
-          stroke={clair ? "#FFFFFF" : "#0F766E"}
+          stroke={clair ? "#FFFFFF" : "rgb(var(--c-primaire, 192 103 90))"}
           strokeDasharray={c}
           strokeDashoffset={c * (1 - pct)}
           style={{ transition: "stroke-dashoffset 600ms cubic-bezier(0.2,0.8,0.2,1)" }}
@@ -291,8 +293,9 @@ export function Feuille({
     };
   }, [ouverte, onFermer]);
 
-  if (!ouverte) return null;
-  return (
+  if (!ouverte || typeof document === "undefined") return null;
+  // Affichée directement dans <body> : toujours au-dessus de tout (barre du bas comprise).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal aria-label={titre}>
       <div className="absolute inset-0 animate-fondu bg-slate-900/40" onClick={onFermer} />
       <div className="pb-safe max-h-feuille relative flex w-full max-w-lg animate-monte flex-col rounded-t-4xl bg-white shadow-flottant sm:animate-apparition sm:rounded-4xl">
@@ -308,7 +311,8 @@ export function Feuille({
         </div>
         {pied && <div className="border-t border-bord px-6 py-4">{pied}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

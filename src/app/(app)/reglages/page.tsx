@@ -24,7 +24,7 @@ import type { Donnees, JourSemaine, Tache } from "@/lib/types";
 const ONGLETS = ["Filles", "Chambres", "Tâches", "Ménages", "Général"] as const;
 type Onglet = (typeof ONGLETS)[number];
 
-const COULEURS = ["#0F766E", "#4F46E5", "#BE185D", "#B45309", "#0369A1", "#7C3AED", "#15803D", "#C2410C"];
+const COULEURS = ["#C2474F", "#8B5CC4", "#D9772F", "#4F6D8A", "#2E8A8A", "#C85A7C", "#5B8A5E", "#B0803A"];
 
 const nouvelId = (prefixe: string) => `${prefixe}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 

@@ -117,7 +117,7 @@ export default function MesTachesPage() {
         <CarteAccueil
           className="animate-apparition"
           surtitre={date === today() ? "Aujourd'hui" : formatJourLong(date)}
-          titre={estAdmin ? employee?.prenom ?? "" : `${salutation()} ${employee?.prenom ?? ""}`}
+          titre={estAdmin ? employee?.prenom ?? "" : `${salutation()} ${employee?.prenom ?? ""} ! 👋`}
           sousTitre={
             shift && !shift.conge ? (
               <>
@@ -184,7 +184,7 @@ export default function MesTachesPage() {
         ) : (
           <>
             <TitreSection action={<span className="text-[13px] font-medium text-doux">{carte.chambres.length} à faire</span>}>
-              Mes chambres
+              🧹 Mes chambres
             </TitreSection>
             <Carte className="overflow-hidden">
               {carte.chambres.length === 0 && <p className="p-5 text-[15px] text-pale">Aucune chambre aujourd&apos;hui.</p>}
@@ -209,7 +209,7 @@ export default function MesTachesPage() {
 
             {carte.taches.length > 0 && (
               <>
-                <TitreSection>Tâches en plus</TitreSection>
+                <TitreSection>✨ Tâches en plus</TitreSection>
                 <Carte className="overflow-hidden">
                   {carte.taches.map((t, i) => (
                     <Ligne
@@ -229,7 +229,7 @@ export default function MesTachesPage() {
 
             {linge.size > 0 && (
               <>
-                <TitreSection action={<Shirt className="h-5 w-5 text-pale" />}>Linge à prévoir</TitreSection>
+                <TitreSection>🧺 Linge à prévoir</TitreSection>
                 <Carte className="p-4">
                   <div className="grid grid-cols-2 gap-2.5">
                     {donnees.articlesLinge

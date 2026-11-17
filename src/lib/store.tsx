@@ -20,7 +20,7 @@ import {
 } from "react";
 import { mondayOf } from "./dates";
 import { repartir } from "./repartition";
-import { conversationsExemple, creerDonneesExemple, DATA_VERSION } from "./sampleData";
+import { conversationsExemple, creerDonneesExemple, DATA_VERSION, NOUVELLES_COULEURS } from "./sampleData";
 import { renvoyerPhotosEnAttente } from "./photos";
 import { Synchro, type EtatSynchro } from "./sync";
 import { GOUVERNANTE, type CarteFille, type Donnees, type ISODate, type Message, type Participant, type Session, type Shift } from "./types";
@@ -49,6 +49,10 @@ function ecrire(cle: string, valeur: unknown) {
 /** Complète les données d'une ancienne version (ex. avant l'arrivée du chat). */
 export function normaliser(d: Donnees): Donnees {
   const n = { ...d };
+  // Couleurs d'origine des filles remplacées par la nouvelle palette (seulement si jamais modifiées).
+  if (n.employees.some((e) => NOUVELLES_COULEURS[e.couleur.toLowerCase()])) {
+    n.employees = n.employees.map((e) => ({ ...e, couleur: NOUVELLES_COULEURS[e.couleur.toLowerCase()] ?? e.couleur }));
+  }
   if (!Array.isArray(n.conversations) || !Array.isArray(n.messages)) Object.assign(n, conversationsExemple());
   if (!n.conversations.some((c) => c.type === "groupe")) {
     n.conversations = [

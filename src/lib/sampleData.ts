@@ -17,12 +17,15 @@ import type {
 
 export const DATA_VERSION = 1;
 
+/** Anciennes couleurs des filles → nouvelles (douces, assorties au thème terracotta). */
+export const NOUVELLES_COULEURS: Record<string, string> = {"#0f766e": "#C2474F", "#4f46e5": "#8B5CC4", "#be185d": "#D9772F", "#b45309": "#4F6D8A", "#0369a1": "#2E8A8A"};
+
 const employees: Employee[] = [
-  { id: "e1", prenom: "Nadja", couleur: "#0F766E", actif: true },
-  { id: "e2", prenom: "Cécile", couleur: "#4F46E5", actif: true },
-  { id: "e3", prenom: "Ingrid", couleur: "#BE185D", actif: true },
-  { id: "e4", prenom: "Amalia", couleur: "#B45309", actif: true },
-  { id: "e5", prenom: "Célia", couleur: "#0369A1", actif: true },
+  { id: "e1", prenom: "Nadja", couleur: "#C2474F", actif: true },
+  { id: "e2", prenom: "Cécile", couleur: "#8B5CC4", actif: true },
+  { id: "e3", prenom: "Ingrid", couleur: "#D9772F", actif: true },
+  { id: "e4", prenom: "Amalia", couleur: "#4F6D8A", actif: true },
+  { id: "e5", prenom: "Célia", couleur: "#2E8A8A", actif: true },
 ];
 
 const numeros = [

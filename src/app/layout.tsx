@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { EnregistrementSW } from "@/components/EnregistrementSW";
 import { SCRIPT_INVITATION } from "@/components/Installation";
+import { SCRIPT_THEME } from "@/lib/theme";
 import { BASE, NOM_APPLI, NOM_COURT } from "@/config";
 import { StoreProvider } from "@/lib/store";
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F5F6F8",
+  themeColor: "#F7F4F1",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -32,6 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Capte tout de suite l'invitation « Installer l'appli » d'Android */}
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_INVITATION }} />
+        {/* Couleurs choisies sur ce téléphone, posées avant l'affichage */}
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_THEME }} />
       </head>
       <body className="font-sans">
         <StoreProvider>{children}</StoreProvider>

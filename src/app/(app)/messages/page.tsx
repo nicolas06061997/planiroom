@@ -49,7 +49,7 @@ export default function MessagesPage() {
         <CarteAccueil
           className="animate-apparition"
           surtitre="Messages"
-          titre="Discuter avec l'équipe"
+          titre="Discuter avec l'équipe 💬"
           sousTitre={totalNonLus > 0 ? `${totalNonLus} message${totalNonLus > 1 ? "s" : ""} non lu${totalNonLus > 1 ? "s" : ""}` : "Le groupe de l'équipe et vos conversations privées."}
         >
           <Bouton variante="blanc" taille="grand" pleineLargeur icone={<MessageCirclePlus className="h-5.5 w-5.5" />} onClick={() => setNouvelle(true)}>
@@ -61,7 +61,7 @@ export default function MessagesPage() {
 
         {groupe && (
           <>
-            <TitreSection>Groupe</TitreSection>
+            <TitreSection>💬 Groupe</TitreSection>
             <Carte className="overflow-hidden">
               <LigneConversation c={groupe.c} moi={moi} nonLus={nonLus(donnees, groupe.c.id)} onClick={() => ouvrir(groupe.c.id)} />
             </Carte>
@@ -69,7 +69,7 @@ export default function MessagesPage() {
         )}
 
         <TitreSection action={<span className="hidden items-center gap-1 text-[13px] text-doux xs:flex"><Lock className="h-3.5 w-3.5" /> Visibles par les membres seulement</span>}>
-          Privé
+          🔒 Privé
         </TitreSection>
         {privees.length === 0 ? (
           <Carte>

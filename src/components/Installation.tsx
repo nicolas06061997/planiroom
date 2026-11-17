@@ -10,6 +10,7 @@
  */
 import { Check, Compass, Copy, Download, EllipsisVertical, Menu, PlusSquare, Share, Smartphone, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { BASE, NOM_APPLI } from "@/config";
 import { Bouton, cx } from "./ui";
 
@@ -232,7 +233,9 @@ export function EcranInstallation({ onFermer }: { onFermer: () => void }) {
     );
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+  // Affiché directement dans <body> : toujours au-dessus de tout.
+  return createPortal(
     <div className="pt-safe pb-safe fixed inset-0 z-[60] flex animate-fondu flex-col overflow-y-auto bg-white" role="dialog" aria-modal aria-label={titre}>
       <div className="hero relative px-6 pb-12 pt-6 text-white">
         <button
@@ -261,7 +264,8 @@ export function EcranInstallation({ onFermer }: { onFermer: () => void }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

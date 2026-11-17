@@ -101,7 +101,7 @@ function Planning() {
         )}
 
         <TitreSection action={estAdmin ? <span className="text-[13px] text-doux">Touchez un jour</span> : undefined}>
-          Horaires de l&apos;équipe
+          🗓️ Horaires de l&apos;équipe
         </TitreSection>
 
         <Carte className="overflow-hidden">

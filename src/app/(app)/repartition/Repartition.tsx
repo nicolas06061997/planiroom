@@ -199,7 +199,7 @@ export function Repartition({ date }: { date: string }) {
                 </span>
               }
             >
-              {rep.cartes.length} filles
+              👥 {rep.cartes.length} filles
             </TitreSection>
 
             <div className="flex flex-col gap-3.5">
@@ -294,7 +294,7 @@ export function Repartition({ date }: { date: string }) {
 
             {(nonAttribues.chambres.length > 0 || nonAttribues.taches.length > 0) && (
               <>
-                <TitreSection>Non attribuées</TitreSection>
+                <TitreSection>📌 Non attribuées</TitreSection>
                 <Carte className="border-2 border-dashed border-gray-200 p-5 shadow-none">
                   <p className="mb-3 text-sm text-doux">Touchez un élément pour le donner à une fille.</p>
                   <div className="flex flex-wrap gap-2">

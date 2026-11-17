@@ -2,6 +2,7 @@
 
 import { CalendarCheck, ImagePlus, Images, CheckCircle2, ChevronLeft, ChevronRight, Info, PencilLine, RotateCcw } from "lucide-react";
 import { useRef, useState } from "react";
+import { ChiffresSemaine, CarteSemaineEquipe } from "@/components/SemaineEquipe";
 import { SelecteurFille, useFilleCourante } from "@/components/SelecteurFille";
 import { BarreActions, EnTete, Page } from "@/components/shell";
 import { Bouton, BoutonIcone, Carte, CarteAccueil, cx, Pastille, TitreSection } from "@/components/ui";
@@ -12,6 +13,7 @@ import {
   formatHeure,
   formatJourCourt,
   formatSemaine,
+  formatSemaineCourte,
   JOURS_LONGS,
   jourSemaine,
   mondayOf,
@@ -157,21 +159,29 @@ export default function HorairePage() {
           <>
             <CarteAccueil
               className="animate-apparition"
-              surtitre={estAdmin ? `Horaire de ${employee?.prenom ?? ""}` : "Mon horaire"}
-              titre="Envoyer mon horaire"
-              sousTitre="Choisissez vos captures d'écran de Shifter dans vos photos : l'appli lit les jours et les heures toute seule."
+              titre={estAdmin ? "Bonjour l'équipe ! 👋" : `Bonjour ${employee?.prenom ?? ""} ! 👋`}
+              sousTitre={`Semaine du ${formatSemaineCourte(mondayOf(today()))}`}
             >
-              <Bouton variante="blanc" taille="grand" pleineLargeur icone={<Images className="h-5.5 w-5.5" />} onClick={() => inputRef.current?.click()}>
+              <p className="rounded-2xl bg-white/[0.16] px-4 py-2.5 text-[15px] font-medium">
+                {estAdmin ? `Envoyer l'horaire de ${employee?.prenom ?? ""}` : "Envoyer mon horaire"} 🗓️
+              </p>
+              <Bouton variante="blanc" taille="grand" pleineLargeur className="mt-3" icone={<Images className="h-5.5 w-5.5" />} onClick={() => inputRef.current?.click()}>
                 Choisir mes captures
               </Bouton>
-              <p className="mt-2.5 text-center text-[13px] text-white/70">Vous pouvez en choisir plusieurs d&apos;un coup.</p>
+              <p className="mt-2.5 text-center text-[13px] text-white/80">Une ou plusieurs captures à la fois.</p>
+              <button type="button" onClick={saisieManuelle} className="mx-auto mt-1 flex min-h-11 items-center gap-2 px-4 text-[15px] font-semibold text-white">
+                <PencilLine className="h-4.5 w-4.5" /> Saisir à la main ✍️
+              </button>
             </CarteAccueil>
 
             {erreur && <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[15px] text-red-800">{erreur}</p>}
 
-            <Bouton variante="fantome" pleineLargeur className="mt-2" icone={<PencilLine className="h-4.5 w-4.5" />} onClick={saisieManuelle}>
-              Saisir à la main
-            </Bouton>
+            <div className="mt-4">
+              <CarteSemaineEquipe />
+            </div>
+            <div className="mt-3">
+              <ChiffresSemaine />
+            </div>
 
             <TitreSection
               action={
@@ -184,7 +194,7 @@ export default function HorairePage() {
                 )
               }
             >
-              Horaire enregistré
+              {estAdmin ? `🧾 Horaire de ${employee?.prenom ?? ""}` : "🧾 Mon horaire"}
             </TitreSection>
             <Carte className="overflow-hidden">
               <div className="flex items-center gap-1 border-b border-black/5 px-2 py-1">
