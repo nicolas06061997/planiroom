@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, Camera, CheckCircle2, ChevronLeft, ChevronRight, Info, PencilLine, RotateCcw } from "lucide-react";
+import { CalendarCheck, ImagePlus, Images, CheckCircle2, ChevronLeft, ChevronRight, Info, PencilLine, RotateCcw } from "lucide-react";
 import { useRef, useState } from "react";
 import { SelecteurFille, useFilleCourante } from "@/components/SelecteurFille";
 import { BarreActions, EnTete, Page } from "@/components/shell";
@@ -36,7 +36,8 @@ export default function HorairePage() {
   const [lundi, setLundi] = useState(() => mondayOf(today()));
   const [etape, setEtape] = useState<Etape>("repos");
   const [jours, setJours] = useState<JourLu[]>([]);
-  const [apercu, setApercu] = useState<string | null>(null);
+  const [apercus, setApercus] = useState<string[]>([]);
+  const [progression, setProgression] = useState({ n: 0, total: 0 });
   const [demo, setDemo] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,28 +48,56 @@ export default function HorairePage() {
   const recommencer = () => {
     setEtape("repos");
     setJours([]);
-    setApercu(null);
+    setApercus([]);
     setErreur(null);
     setDemo(false);
   };
 
-  const lire = async (fichier: File) => {
+  /**
+   * Lit une ou plusieurs captures (ex. la semaine en deux morceaux) et
+   * fusionne les jours trouvés. `ajouter` = garder les jours déjà lus.
+   */
+  const lire = async (fichiers: File[], ajouter = false) => {
+    if (fichiers.length === 0) return;
+    const etapeAvant = etape;
     setErreur(null);
     setEtape("lecture");
-    try {
-      const img = await preparerImage(fichier);
-      setApercu(img.apercu);
-      const data = await lireCapture({ image: img.base64, mediaType: img.mediaType, aujourdhui: today(), lundi });
-      if (data.erreur) throw new Error(data.erreur);
-      if (data.jours.length === 0) throw new Error("Aucun jour trouvé sur cette capture.");
-      setJours(data.jours);
-      setDemo(!!data.demo);
-      if (data.jours[0]) setLundi(mondayOf(data.jours[0].date));
-      setEtape("verification");
-    } catch (e) {
-      setErreur(e instanceof Error ? e.message : "Lecture impossible.");
-      setEtape("repos");
+    const parDate = new Map<string, JourLu>(ajouter ? jours.map((j) => [j.date, j]) : []);
+    const nouveaux: string[] = ajouter ? [...apercus] : [];
+    let demoVue = ajouter && demo;
+    let echecs = 0;
+    for (let i = 0; i < fichiers.length; i++) {
+      setProgression({ n: i + 1, total: fichiers.length });
+      try {
+        const img = await preparerImage(fichiers[i]);
+        nouveaux.push(img.apercu);
+        setApercus([...nouveaux]);
+        const data = await lireCapture({ image: img.base64, mediaType: img.mediaType, aujourdhui: today(), lundi });
+        if (data.erreur || data.jours.length === 0) {
+          echecs++;
+          continue;
+        }
+        data.jours.forEach((j) => parDate.set(j.date, j));
+        demoVue = demoVue || !!data.demo;
+      } catch {
+        echecs++;
+      }
     }
+    const tous = [...parDate.values()].sort((x, y) => x.date.localeCompare(y.date));
+    if (tous.length === 0) {
+      setErreur(
+        fichiers.length > 1
+          ? "Aucun jour n'a pu être lu sur ces captures. Essayez avec des captures plus nettes, ou saisissez à la main."
+          : "Aucun jour n'a pu être lu sur cette capture. Essayez avec une capture plus nette, ou saisissez à la main."
+      );
+      setEtape(ajouter ? etapeAvant : "repos");
+      return;
+    }
+    setJours(tous);
+    setDemo(demoVue);
+    setLundi(mondayOf(tous[0].date));
+    if (echecs > 0) setErreur(`${echecs} capture(s) n'ont pas pu être lues. Vérifiez bien les jours ci-dessous.`);
+    setEtape("verification");
   };
 
   const saisieManuelle = () => {
@@ -78,8 +107,9 @@ export default function HorairePage() {
         return s ? { date, debut: s.debut, fin: s.fin, conge: s.conge } : { date, debut: "08:00", fin: "14:00", conge: false };
       })
     );
-    setApercu(null);
+    setApercus([]);
     setDemo(false);
+    setErreur(null);
     setEtape("verification");
   };
 
@@ -114,10 +144,11 @@ export default function HorairePage() {
           ref={inputRef}
           type="file"
           accept="image/*"
+          multiple
           className="hidden"
           onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) lire(f);
+            const fichiers = Array.from(e.target.files ?? []);
+            lire(fichiers, etape === "verification");
             e.target.value = "";
           }}
         />
@@ -128,11 +159,12 @@ export default function HorairePage() {
               className="animate-apparition"
               surtitre={estAdmin ? `Horaire de ${employee?.prenom ?? ""}` : "Mon horaire"}
               titre="Envoyer mon horaire"
-              sousTitre="Une capture d'écran de Shifter suffit : l'appli lit les jours et les heures."
+              sousTitre="Choisissez vos captures d'écran de Shifter dans vos photos : l'appli lit les jours et les heures toute seule."
             >
-              <Bouton variante="blanc" taille="grand" pleineLargeur icone={<Camera className="h-5.5 w-5.5" />} onClick={() => inputRef.current?.click()}>
-                Ajouter une capture
+              <Bouton variante="blanc" taille="grand" pleineLargeur icone={<Images className="h-5.5 w-5.5" />} onClick={() => inputRef.current?.click()}>
+                Choisir mes captures
               </Bouton>
+              <p className="mt-2.5 text-center text-[13px] text-white/70">Vous pouvez en choisir plusieurs d&apos;un coup.</p>
             </CarteAccueil>
 
             {erreur && <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[15px] text-red-800">{erreur}</p>}
@@ -189,12 +221,14 @@ export default function HorairePage() {
 
         {etape === "lecture" && (
           <Carte className="flex animate-apparition flex-col items-center px-6 py-14 text-center">
-            {apercu && (
+            {apercus.length > 0 && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={apercu} alt="Capture envoyée" className="mb-6 max-h-48 rounded-2xl border border-bord object-contain shadow-carte" />
+              <img src={apercus[apercus.length - 1]} alt="Capture en cours de lecture" className="mb-6 max-h-48 rounded-2xl border border-bord object-contain shadow-carte" />
             )}
             <div className="h-9 w-9 animate-spin rounded-full border-3 border-primaire/20 border-t-primaire" />
-            <p className="mt-4 text-[17px] font-bold text-encre">Lecture de la capture…</p>
+            <p className="mt-4 text-[17px] font-bold text-encre">
+              {progression.total > 1 ? `Lecture de la capture ${progression.n} sur ${progression.total}…` : "Lecture de la capture…"}
+            </p>
             <p className="mt-1 text-[15px] text-doux">Quelques secondes.</p>
           </Carte>
         )}
@@ -208,16 +242,32 @@ export default function HorairePage() {
               </div>
             )}
 
+            {erreur && <p className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[14px] text-amber-900">{erreur}</p>}
+
             <div className="flex items-center gap-3.5 px-1">
-              {apercu && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={apercu} alt="Capture" className="h-14 w-14 rounded-2xl border border-bord object-cover" />
+              {apercus.length > 0 && (
+                <div className="flex shrink-0">
+                  {apercus.slice(-3).map((src, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`Capture ${i + 1}`}
+                      className={cx("h-14 w-11 rounded-xl border-2 border-white object-cover shadow-carte", i > 0 && "-ml-5")}
+                    />
+                  ))}
+                </div>
               )}
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <p className="text-[22px] font-bold tracking-tight text-encre">Vérifiez vos jours</p>
                 <p className="text-[14px] text-doux">
                   {jours.filter((j) => !j.conge).length} jours de travail · {formatDuree(totalHeures)}
                 </p>
+                {apercus.length > 0 && (
+                  <p className="text-[13px] text-pale">
+                    {apercus.length} capture{apercus.length > 1 ? "s" : ""} lue{apercus.length > 1 ? "s" : ""}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -226,6 +276,10 @@ export default function HorairePage() {
                 <LigneJour key={j.date} premiere={i === 0} jour={j} onChange={(p) => modifierJour(j.date, p)} />
               ))}
             </Carte>
+
+            <Bouton variante="fantome" pleineLargeur className="mt-2" icone={<ImagePlus className="h-4.5 w-4.5" />} onClick={() => inputRef.current?.click()}>
+              Ajouter une autre capture
+            </Bouton>
 
             <BarreActions>
               <Bouton variante="secondaire" taille="grand" icone={<RotateCcw className="h-4.5 w-4.5" />} onClick={recommencer}>
