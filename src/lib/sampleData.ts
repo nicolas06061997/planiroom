@@ -94,6 +94,24 @@ function chambresPourDate(date: ISODate): ChambreDuJour[] {
   return result;
 }
 
+/** Groupe de l'équipe (toujours présent) + quelques messages d'exemple. */
+export function conversationsExemple(): Pick<Donnees, "conversations" | "messages"> {
+  const il = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+  return {
+    conversations: [
+      { id: "groupe", type: "groupe", nom: "Équipe", membres: [], creePar: "gouvernante", creeeLe: il(60 * 24 * 7) },
+      { id: "p-e1-e2", type: "prive", membres: ["e1", "e2"], creePar: "e1", creeeLe: il(60 * 5) },
+    ],
+    messages: [
+      { id: "m1", conversationId: "groupe", auteur: "gouvernante", texte: "Bonjour à toutes ! La répartition de demain est envoyée, pensez à la regarder.", envoyeLe: il(60 * 3) },
+      { id: "m2", conversationId: "groupe", auteur: "e3", texte: "Merci ! Il manque des taies au 1er étage.", envoyeLe: il(60 * 2 + 40) },
+      { id: "m3", conversationId: "groupe", auteur: "gouvernante", texte: "Je m'en occupe.", envoyeLe: il(60 * 2 + 30) },
+      { id: "m4", conversationId: "p-e1-e2", auteur: "e2", texte: "Tu peux prendre la 105 à ma place ? Je finis à 14h.", envoyeLe: il(60 * 4) },
+      { id: "m5", conversationId: "p-e1-e2", auteur: "e1", texte: "Oui pas de souci.", envoyeLe: il(60 * 3 + 50) },
+    ],
+  };
+}
+
 export function creerDonneesExemple(): Donnees {
   const lundi = mondayOf(today());
   const lundiSuivant = addDays(lundi, 7);
@@ -128,5 +146,6 @@ export function creerDonneesExemple(): Donnees {
     envois,
     chambresDuJour: Object.fromEntries(jours.map((d) => [d, chambresPourDate(d)])),
     repartitions: {},
+    ...conversationsExemple(),
   };
 }

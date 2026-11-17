@@ -20,9 +20,9 @@ import {
 } from "react";
 import { mondayOf } from "./dates";
 import { repartir } from "./repartition";
-import { creerDonneesExemple, DATA_VERSION } from "./sampleData";
+import { conversationsExemple, creerDonneesExemple, DATA_VERSION } from "./sampleData";
 import { Synchro, type EtatSynchro } from "./sync";
-import type { CarteFille, Donnees, ISODate, Session, Shift } from "./types";
+import { GOUVERNANTE, type CarteFille, type Donnees, type ISODate, type Participant, type Session, type Shift } from "./types";
 
 const CLE_DONNEES = "planiroom:donnees";
 const CLE_SESSION = "planiroom:session";
@@ -45,9 +45,22 @@ function ecrire(cle: string, valeur: unknown) {
   }
 }
 
+/** Complète les données d'une ancienne version (ex. avant l'arrivée du chat). */
+export function normaliser(d: Donnees): Donnees {
+  const n = { ...d };
+  if (!Array.isArray(n.conversations) || !Array.isArray(n.messages)) Object.assign(n, conversationsExemple());
+  if (!n.conversations.some((c) => c.type === "groupe")) {
+    n.conversations = [
+      { id: "groupe", type: "groupe", nom: "Équipe", membres: [], creePar: GOUVERNANTE, creeeLe: new Date().toISOString() },
+      ...n.conversations,
+    ];
+  }
+  return n;
+}
+
 function charger(): Donnees {
   const d = lire<Donnees>(CLE_DONNEES);
-  if (d && d.version === DATA_VERSION) return d;
+  if (d && d.version === DATA_VERSION) return normaliser(d);
   return creerDonneesExemple();
 }
 
@@ -65,6 +78,9 @@ interface StoreValue {
   modifierCartes: (date: ISODate, fn: (cartes: CarteFille[]) => CarteFille[]) => void;
   envoyerRepartition: (date: ISODate) => void;
   reinitialiser: () => void;
+  envoyerMessage: (conversationId: string, auteur: Participant, texte: string) => void;
+  /** Crée (ou retrouve) une conversation privée ; renvoie son id. */
+  creerConversation: (membres: Participant[], creePar: Participant, nom?: string) => string;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -81,7 +97,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setDonnees(locales);
     setSessionState(lire<Session>(CLE_SESSION));
     setPret(true);
-    const s = new Synchro(setDonnees, setSynchro);
+    const s = new Synchro((d) => setDonnees(normaliser(d)), setSynchro);
     sync.current = s;
     s.demarrer(locales);
     return () => s.arreter();
@@ -169,6 +185,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setDonnees(creerDonneesExemple());
   }, []);
 
+  const envoyerMessage = useCallback((conversationId: string, auteur: Participant, texte: string) => {
+    const t = texte.trim();
+    if (!t) return;
+    const id = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    setDonnees((d) => ({
+      ...d,
+      messages: [...d.messages, { id, conversationId, auteur, texte: t.slice(0, 2000), envoyeLe: new Date().toISOString() }],
+    }));
+  }, []);
+
+  const creerConversation = useCallback(
+    (membres: Participant[], creePar: Participant, nom?: string) => {
+      const tous = [...new Set([...membres, creePar])].sort();
+      // Une conversation avec exactement les mêmes personnes existe déjà ? On la rouvre.
+      const existante = donnees.conversations.find(
+        (c) => c.type === "prive" && !c.nom && !nom && [...c.membres].sort().join("|") === tous.join("|")
+      );
+      if (existante) return existante.id;
+      const id = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+      setDonnees((d) => ({
+        ...d,
+        conversations: [
+          ...d.conversations,
+          { id, type: "prive", membres: tous, creePar, creeeLe: new Date().toISOString(), ...(nom?.trim() ? { nom: nom.trim() } : {}) },
+        ],
+      }));
+      return id;
+    },
+    [donnees.conversations]
+  );
+
   const value = useMemo<StoreValue>(
     () => ({
       pret,
@@ -182,6 +229,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       modifierCartes,
       envoyerRepartition,
       reinitialiser,
+      envoyerMessage,
+      creerConversation,
     }),
     [
       pret,
@@ -195,6 +244,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       modifierCartes,
       envoyerRepartition,
       reinitialiser,
+      envoyerMessage,
+      creerConversation,
     ]
   );
 
@@ -205,6 +256,12 @@ export function useStore(): StoreValue {
   const ctx = useContext(StoreContext);
   if (!ctx) throw new Error("useStore doit être utilisé dans <StoreProvider>");
   return ctx;
+}
+
+/** La personne connectée, comme participant du chat. */
+export function moiDe(session: Session | null): Participant | null {
+  if (!session) return null;
+  return session.role === "gouvernante" ? GOUVERNANTE : session.employeeId ?? null;
 }
 
 /** Petits raccourcis pratiques pour les écrans. */

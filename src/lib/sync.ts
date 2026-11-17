@@ -55,6 +55,11 @@ export function versArbre(d: Donnees): Arbre {
     chambresDuJour: Object.fromEntries(
       Object.entries(d.chambresDuJour).map(([date, l]) => [date, Object.fromEntries(l.map((c) => [c.chambreId, c.type]))])
     ),
+    conversations: parId(d.conversations),
+    messages: d.messages.reduce<Arbre>((acc, m) => {
+      (acc[m.conversationId] ??= {})[m.id] = m;
+      return acc;
+    }, {}),
     repartitions: Object.fromEntries(
       Object.entries(d.repartitions).map(([date, r]) => [
         date,
@@ -114,12 +119,19 @@ export function depuisArbre(a: Arbre): Donnees {
     envois: Object.values(a.envois ?? {}) as Donnees["envois"],
     chambresDuJour,
     repartitions,
+    conversations: liste<Donnees["conversations"][number] & { o?: number }>(a.conversations).map((c) => ({
+      ...sansOrdre(c),
+      membres: tableau<string>(c.membres),
+    })),
+    messages: Object.values<Arbre>(a.messages ?? {})
+      .flatMap((parConv) => Object.values(parConv ?? {}) as Donnees["messages"])
+      .sort((x, y) => x.envoyeLe.localeCompare(y.envoyeLe)),
   };
 }
 
 /* ---------- Découpage en petits morceaux ---------- */
 
-const PROFONDEUR_2 = ["employees", "chambres", "menages", "articlesLinge", "taches", "shifts", "envois", "chambresDuJour"];
+const PROFONDEUR_2 = ["employees", "chambres", "menages", "articlesLinge", "taches", "shifts", "envois", "chambresDuJour", "conversations"];
 
 /** Transforme l'arbre en { "chemin": "valeur JSON" } au bon niveau de détail. */
 function aplatir(a: Arbre): Record<string, string> {
@@ -128,6 +140,9 @@ function aplatir(a: Arbre): Record<string, string> {
   r["reglages"] = JSON.stringify(a.reglages);
   for (const k of PROFONDEUR_2) {
     for (const [id, val] of Object.entries(a[k] ?? {})) r[`${k}/${id}`] = JSON.stringify(val);
+  }
+  for (const [conv, msgs] of Object.entries<Arbre>(a.messages ?? {})) {
+    for (const [id, m] of Object.entries(msgs ?? {})) r[`messages/${conv}/${id}`] = JSON.stringify(m);
   }
   for (const [date, rep] of Object.entries<Arbre>(a.repartitions ?? {})) {
     r[`repartitions/${date}/info`] = JSON.stringify(rep.info);

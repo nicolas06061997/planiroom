@@ -8,6 +8,7 @@ import {
   CloudOff,
   ListChecks,
   LogOut,
+  MessageCircle,
   RefreshCw,
   Settings,
   ShieldCheck,
@@ -18,7 +19,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { BASE, PARTAGE_ACTIF, VERSION } from "@/config";
 import { Marque } from "./Marque";
-import { useStore } from "@/lib/store";
+import { useTotalNonLus } from "@/lib/messages";
+import { moiDe, useStore } from "@/lib/store";
 import { EcranInstallation, estInstallee } from "./Installation";
 import { Avatar, BoutonIcone, cx, Feuille } from "./ui";
 
@@ -26,15 +28,18 @@ const ONGLETS = [
   { href: "/horaire/", label: "Horaire", icone: CalendarClock, actifSi: ["/horaire"] },
   { href: "/planning/", label: "Planning", icone: CalendarDays, actifSi: ["/planning", "/repartition"] },
   { href: "/mes-taches/", label: "Mes tâches", icone: ListChecks, actifSi: ["/mes-taches"] },
+  { href: "/messages/", label: "Messages", icone: MessageCircle, actifSi: ["/messages"] },
 ];
 
 /* ---------- Barre de navigation du bas ---------- */
 
 export function BarreNavigation() {
   const pathname = usePathname();
+  const { donnees, session } = useStore();
+  const nonLus = useTotalNonLus(donnees, moiDe(session));
   return (
     <nav aria-label="Navigation principale" className="verre-blanc pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-black/5 shadow-nav">
-      <ul className="mx-auto grid max-w-2xl grid-cols-3 px-2">
+      <ul className="mx-auto grid max-w-2xl grid-cols-4 px-1">
         {ONGLETS.map(({ href, label, icone: Icone, actifSi }) => {
           const actif = actifSi.some((p) => pathname.startsWith(p));
           return (
@@ -43,17 +48,22 @@ export function BarreNavigation() {
                 href={href}
                 aria-current={actif ? "page" : undefined}
                 className={cx(
-                  "flex min-h-18 flex-col items-center justify-center gap-1 text-[12px] font-semibold transition-colors",
+                  "flex min-h-18 flex-col items-center justify-center gap-1 whitespace-nowrap text-[11px] font-semibold transition-colors xs:text-[12px]",
                   actif ? "text-primaire" : "text-doux"
                 )}
               >
                 <span
                   className={cx(
-                    "flex h-8 w-16 items-center justify-center rounded-full transition-all duration-200",
+                    "relative flex h-8 w-14 items-center justify-center rounded-full transition-all duration-200",
                     actif ? "bg-primaire-clair" : "bg-transparent"
                   )}
                 >
                   <Icone className="h-5.5 w-5.5" strokeWidth={actif ? 2.3 : 1.9} />
+                  {href === "/messages/" && nonLus > 0 && (
+                    <span className="absolute -top-0.5 right-2.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-conge px-1 text-[11px] font-bold text-white ring-2 ring-white">
+                      {nonLus}
+                    </span>
+                  )}
                 </span>
                 {label}
               </Link>
@@ -98,7 +108,7 @@ export function EnTete({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`${BASE}/icon.svg`} alt="" className="h-8 w-8 rounded-[10px]" />
               <Marque className="text-lg xs:text-xl" />
-              <span className="hidden xs:inline-flex">
+              <span className="hidden sm:inline-flex">
                 <PuceSynchro />
               </span>
             </div>
@@ -284,6 +294,8 @@ function BandeauMiseAJour() {
 export function Coquille({ children }: { children: ReactNode }) {
   const { pret, session } = useStore();
   const router = useRouter();
+  const pathname = usePathname();
+  const pleinEcran = pathname.startsWith("/messages/conversation");
 
   useEffect(() => {
     if (pret && !session) router.replace("/");
@@ -291,9 +303,9 @@ export function Coquille({ children }: { children: ReactNode }) {
 
   if (!pret || !session) return <Chargement />;
   return (
-    <div className="min-h-ecran pb-nav">
+    <div className={cx("min-h-ecran", !pleinEcran && "pb-nav")}>
       {children}
-      <BarreNavigation />
+      {!pleinEcran && <BarreNavigation />}
       <BandeauMiseAJour />
     </div>
   );

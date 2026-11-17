@@ -116,6 +116,28 @@ export interface Repartition {
   envoyeeLe?: string;
 }
 
+/** Une personne dans le chat : l'id d'une fille, ou "gouvernante". */
+export type Participant = string;
+export const GOUVERNANTE: Participant = "gouvernante";
+
+export interface Conversation {
+  id: string;
+  /** "groupe" = toute l'équipe ; "prive" = seulement les membres choisis. */
+  type: "groupe" | "prive";
+  nom?: string;
+  membres: Participant[];
+  creePar: Participant;
+  creeeLe: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  auteur: Participant;
+  texte: string;
+  envoyeLe: string;
+}
+
 export interface Donnees {
   version: number;
   employees: Employee[];
@@ -129,6 +151,8 @@ export interface Donnees {
   /** Chambres à faire, par date. */
   chambresDuJour: Record<ISODate, ChambreDuJour[]>;
   repartitions: Record<ISODate, Repartition>;
+  conversations: Conversation[];
+  messages: Message[];
 }
 
 export interface Session {

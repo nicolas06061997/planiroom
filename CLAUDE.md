@@ -34,6 +34,10 @@ Le design s'inspire de l'appli Céline (carte d'accueil en dégradé, cartes tr�
   Chaque élément est un chemin séparé (`aplatir()`), envois en PATCH multi-chemins ; changements non confirmés gardés
   dans `planiroom:attente` et renvoyés au démarrage ; envoi `keepalive` à la fermeture.
   Tester avec un faux serveur Firebase (la session de développement ne joint pas Firebase).
+- Chat : onglet « Messages » (`src/app/(app)/messages/`), aides dans `src/lib/messages.ts`. Groupe « Équipe » (id `groupe`,
+  tout le monde) + conversations privées (`membres`, visibles seulement par eux : `peutVoir()`). Participant = id d'une fille
+  ou `"gouvernante"`. Messages synchronisés en `messages/<conversation>/<message>`. « Lu » gardé sur chaque téléphone
+  (`planiroom:lus`). Limite : avec la base Firebase ouverte, la confidentialité n'est garantie que par l'appli (pas par la base).
 - Répartition : `src/lib/repartition.ts` (charge / temps disponible, rotation des tâches pénibles sur 28 jours, étages groupés).
 - Lecture des captures : `serveur/lire-horaire.ts` (API Claude vision, à héberger à part), client `src/lib/lecture.ts` (démo sans LECTURE_URL).
 - Mises à jour : `public/version.json` écrit au build ; l'appli recharge une fois par version, sinon bandeau. SW `public/sw.js?v=VERSION`.
