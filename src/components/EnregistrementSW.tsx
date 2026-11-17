@@ -2,9 +2,6 @@
 
 import { useEffect } from "react";
 import { BASE, VERSION } from "@/config";
-import { capterInvitation } from "./Installation";
-
-if (typeof window !== "undefined") capterInvitation();
 
 /** Active le "service worker" : appli installable et utilisable avec un réseau faible. */
 export function EnregistrementSW() {

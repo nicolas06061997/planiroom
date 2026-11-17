@@ -1,5 +1,6 @@
 "use client";
 
+import { BandeauInstallation } from "@/components/Installation";
 import { Check, Hourglass, MessageSquarePlus, PartyPopper, Shirt, StickyNote } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { BandeJours } from "@/components/BandeJours";
@@ -151,6 +152,8 @@ export default function MesTachesPage() {
             <p className="rounded-2xl bg-white/15 px-4 py-2.5 text-[15px] font-semibold">Tout est terminé, merci et bravo !</p>
           )}
         </CarteAccueil>
+
+        <BandeauInstallation className="mt-4" />
 
         <div className="mt-4">
           <BandeJours

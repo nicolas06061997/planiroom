@@ -3,7 +3,7 @@
 import { ChevronRight, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { InstallationAuto } from "@/components/Installation";
+import { BandeauInstallation, InstallationAuto } from "@/components/Installation";
 import { Chargement } from "@/components/shell";
 import { Avatar } from "@/components/ui";
 import { BASE, NOM_APPLI } from "@/config";
@@ -50,6 +50,8 @@ export default function Accueil() {
         <div className="mx-auto max-w-md animate-apparition" style={{ animationDelay: "80ms" }}>
           <h2 className="px-1 text-[22px] font-bold tracking-tight text-encre">Qui êtes-vous ?</h2>
           <p className="mt-1 px-1 text-[15px] text-doux">Touchez votre prénom pour commencer.</p>
+
+          <BandeauInstallation className="mt-5" />
 
           <div className="mt-5 grid grid-cols-2 gap-3">
             {donnees.employees

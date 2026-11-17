@@ -1,5 +1,6 @@
 "use client";
 
+import { BandeauInstallation } from "@/components/Installation";
 import { ChevronLeft, ChevronRight, Shuffle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -86,6 +87,8 @@ function Planning() {
             </Bouton>
           )}
         </CarteAccueil>
+
+        <BandeauInstallation className="mt-4" />
 
         {lundi !== mondayOf(today()) && (
           <button
