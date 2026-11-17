@@ -7,6 +7,8 @@
 import { Check, ImagePlus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { preparerImage } from "@/lib/image";
+import { chargerPhoto, enregistrerPhoto } from "@/lib/photos";
+import { moiDe, useStore } from "@/lib/store";
 import { changerFond, changerTheme, lireFond, lireTheme, PALETTE, type ReglageFond } from "@/lib/theme";
 import { Bouton, cx, Feuille, Interrupteur } from "./ui";
 
@@ -46,6 +48,8 @@ export function FondEcran() {
 
 /** Fenêtre « Couleurs » ouverte par le bouton palette. */
 export function FeuilleApparence({ ouverte, onFermer }: { ouverte: boolean; onFermer: () => void }) {
+  const { session, majProfil } = useStore();
+  const moi = moiDe(session);
   const [couleur, setCouleur] = useState(lireTheme());
   const fond = useFond();
   const [erreur, setErreur] = useState<string | null>(null);
@@ -60,7 +64,14 @@ export function FeuilleApparence({ ouverte, onFermer }: { ouverte: boolean; onFe
     setErreur(null);
     try {
       const img = await preparerImage(f, 1400, 0.72);
-      if (!changerFond({ ...fond, photo: img.apercu })) setErreur("Cette photo est trop lourde pour ce téléphone.");
+      const id = `fond-${moi ?? "inconnu"}-${Date.now().toString(36)}`;
+      if (!changerFond({ ...fond, photo: img.apercu, id })) {
+        setErreur("Cette photo est trop lourde pour ce téléphone.");
+        return;
+      }
+      // Gardée aussi en ligne : elle revient même si le téléphone est vidé.
+      enregistrerPhoto(id, img.apercu);
+      if (moi) majProfil(moi, (p) => ({ ...p, fondPhoto: id, fondFlou: fond.flou }));
     } catch {
       setErreur("Cette photo n'a pas pu être ouverte.");
     }
@@ -81,6 +92,7 @@ export function FeuilleApparence({ ouverte, onFermer }: { ouverte: boolean; onFe
               onClick={() => {
                 setCouleur(p.hex);
                 changerTheme(p.hex);
+                if (moi) majProfil(moi, (pr) => ({ ...pr, couleur: p.hex }));
               }}
               aria-pressed={actif}
               className="flex flex-col items-center gap-1.5"
@@ -113,7 +125,10 @@ export function FeuilleApparence({ ouverte, onFermer }: { ouverte: boolean; onFe
             {fond.photo ? "Changer la photo" : "Mettre une photo"}
           </Bouton>
           {fond.photo && (
-            <Bouton variante="fantome" icone={<Trash2 className="h-4.5 w-4.5" />} onClick={() => changerFond({ flou: fond.flou })}>
+            <Bouton variante="fantome" icone={<Trash2 className="h-4.5 w-4.5" />} onClick={() => {
+                changerFond({ flou: fond.flou });
+                if (moi) majProfil(moi, (p) => ({ ...p, fondPhoto: undefined }));
+              }}>
               Fond doux
             </Bouton>
           )}
@@ -122,10 +137,72 @@ export function FeuilleApparence({ ouverte, onFermer }: { ouverte: boolean; onFe
       {fond.photo && (
         <div className="mt-3 flex items-center justify-between rounded-2xl bg-fond px-4 py-1">
           <span className="text-[15px] font-medium text-encre">Flouter la photo</span>
-          <Interrupteur actif={fond.flou} onChange={(v) => changerFond({ ...fond, flou: v })} label="Flouter la photo" />
+          <Interrupteur
+            actif={fond.flou}
+            onChange={(v) => {
+              changerFond({ ...fond, flou: v });
+              if (moi) majProfil(moi, (p) => ({ ...p, fondFlou: v }));
+            }}
+            label="Flouter la photo"
+          />
         </div>
       )}
       {erreur && <p className="mt-3 text-sm text-red-700">{erreur}</p>}
     </Feuille>
   );
+}
+
+/**
+ * Remet les réglages personnels gardés en ligne (couleur, photo de fond, notifications)
+ * quand ils manquent sur ce téléphone : après un historique effacé, un nouveau téléphone, etc.
+ */
+export function RestaurerProfil() {
+  const { donnees, session, majProfil } = useStore();
+  const moi = moiDe(session);
+  const profil = moi ? donnees.profils?.[moi] : undefined;
+
+  // Couleur
+  useEffect(() => {
+    if (!moi) return;
+    if (profil?.couleur) {
+      if (profil.couleur.toLowerCase() !== lireTheme().toLowerCase()) changerTheme(profil.couleur);
+    } else {
+      // Couleur choisie avant cette version : on la garde en ligne.
+      let locale: string | null = null;
+      try {
+        locale = localStorage.getItem("planiroom:theme");
+      } catch {}
+      if (locale) majProfil(moi, (p) => ({ ...p, couleur: locale! }));
+    }
+  }, [moi, profil?.couleur, majProfil]);
+
+  // Photo de fond
+  useEffect(() => {
+    if (!moi || !profil) return;
+    const local = lireFond();
+    if (profil.fondPhoto && local.id !== profil.fondPhoto) {
+      let actif = true;
+      chargerPhoto(profil.fondPhoto).then((photo) => {
+        if (actif && photo) changerFond({ photo, id: profil.fondPhoto, flou: profil.fondFlou ?? true });
+      });
+      return () => {
+        actif = false;
+      };
+    }
+    if (!profil.fondPhoto && local.id) changerFond({ flou: local.flou }); // retirée sur un autre téléphone
+    if (profil.fondPhoto && profil.fondFlou !== undefined && profil.fondFlou !== local.flou) changerFond({ ...local, flou: profil.fondFlou });
+  }, [moi, profil]);
+
+  // Notifications : si la personne les avait activées et que le téléphone l'autorise encore.
+  useEffect(() => {
+    if (!profil?.notifs || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    try {
+      if (localStorage.getItem("planiroom:notifications") !== "1") {
+        localStorage.setItem("planiroom:notifications", "1");
+        window.dispatchEvent(new Event("planiroom:notifications"));
+      }
+    } catch {}
+  }, [profil?.notifs]);
+
+  return null;
 }

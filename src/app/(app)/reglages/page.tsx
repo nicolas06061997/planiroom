@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronRight, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronRight, Download, Plus, RotateCcw, Trash2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EnTete, Page } from "@/components/shell";
 import {
   Avatar,
@@ -17,7 +17,8 @@ import {
   Pastille,
   TitreSection,
 } from "@/components/ui";
-import { formatDuree, JOURS_COURTS } from "@/lib/dates";
+import { PARTAGE_ACTIF } from "@/config";
+import { formatDuree, JOURS_COURTS, today } from "@/lib/dates";
 import { useStore } from "@/lib/store";
 import type { Donnees, JourSemaine, Tache } from "@/lib/types";
 
@@ -25,6 +26,9 @@ const ONGLETS = ["Filles", "Chambres", "Tâches", "Ménages", "Général"] as co
 type Onglet = (typeof ONGLETS)[number];
 
 const COULEURS = ["#C2474F", "#8B5CC4", "#D9772F", "#4F6D8A", "#2E8A8A", "#C85A7C", "#5B8A5E", "#B0803A"];
+
+/** 1 fille, 2 filles */
+const nombre = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
 
 const nouvelId = (prefixe: string) => `${prefixe}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
@@ -462,8 +466,37 @@ function ReglagesMenages() {
 /* ---------------- Général ---------------- */
 
 function ReglagesGeneral() {
-  const { donnees, modifier, reinitialiser } = useStore();
+  const { donnees, modifier, reinitialiser, restaurer } = useStore();
   const [confirmer, setConfirmer] = useState(false);
+  const [aRestaurer, setARestaurer] = useState<Donnees | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const fichierRef = useRef<HTMLInputElement>(null);
+
+  const telecharger = () => {
+    const contenu = JSON.stringify({ appli: "housekeeping-infinit", sauvegardeLe: new Date().toISOString(), donnees }, null, 1);
+    const url = URL.createObjectURL(new Blob([contenu], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sauvegarde-housekeeping-${today()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    setMessage("Sauvegarde téléchargée. Gardez le fichier en lieu sûr (Google Drive, e-mail…).");
+  };
+
+  const lireFichier = async (f: File | undefined) => {
+    if (!f) return;
+    setMessage(null);
+    try {
+      const brut = JSON.parse(await f.text());
+      const d = (brut?.donnees ?? brut) as Donnees;
+      if (!Array.isArray(d?.employees) || !Array.isArray(d?.chambres) || !Array.isArray(d?.shifts)) throw new Error();
+      setARestaurer(d);
+    } catch {
+      setMessage("Ce fichier n'est pas une sauvegarde de l'appli.");
+    }
+  };
   return (
     <>
       <TitreSection>Temps de travail</TitreSection>
@@ -482,15 +515,70 @@ function ReglagesGeneral() {
         </Champ>
       </Carte>
 
-      <TitreSection>Données</TitreSection>
+      <TitreSection>💾 Sauvegarde</TitreSection>
       <Carte className="p-4">
-        <p className="text-sm text-doux">
-          Bêta : les données sont enregistrées sur cet appareil uniquement. Réinitialiser remet les données d&apos;exemple.
+        <p className="text-[14px] leading-relaxed text-doux">
+          {PARTAGE_ACTIF
+            ? "Tout est déjà gardé en ligne. Une sauvegarde en plus, de temps en temps, ne fait pas de mal."
+            : "Bêta : les données sont sur ce téléphone uniquement. Si l'historique de Chrome est effacé, elles disparaissent : téléchargez une sauvegarde régulièrement."}
         </p>
+        <div className="mt-3 flex flex-col gap-2">
+          <Bouton icone={<Download className="h-4.5 w-4.5" />} onClick={telecharger}>
+            Télécharger une sauvegarde
+          </Bouton>
+          <Bouton variante="secondaire" icone={<Upload className="h-4.5 w-4.5" />} onClick={() => fichierRef.current?.click()}>
+            Restaurer une sauvegarde
+          </Bouton>
+        </div>
+        <input
+          ref={fichierRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            lireFichier(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+        {message && <p className="mt-3 rounded-2xl bg-fond px-4 py-3 text-[14px] text-encre">{message}</p>}
+      </Carte>
+
+      <TitreSection>Données d&apos;exemple</TitreSection>
+      <Carte className="p-4">
+        <p className="text-sm text-doux">Réinitialiser remet les données d&apos;exemple (à éviter une fois l&apos;appli utilisée pour de vrai).</p>
         <Bouton variante="danger" className="mt-3" icone={<RotateCcw className="size-4.5" />} onClick={() => setConfirmer(true)}>
           Réinitialiser les données
         </Bouton>
       </Carte>
+
+      <Feuille
+        ouverte={!!aRestaurer}
+        onFermer={() => setARestaurer(null)}
+        titre="Restaurer cette sauvegarde ?"
+        pied={
+          <div className="flex gap-2">
+            <Bouton variante="secondaire" className="flex-1" onClick={() => setARestaurer(null)}>
+              Annuler
+            </Bouton>
+            <Bouton
+              className="flex-1"
+              onClick={() => {
+                if (aRestaurer) restaurer(aRestaurer);
+                setARestaurer(null);
+                setMessage("Sauvegarde restaurée.");
+              }}
+            >
+              Restaurer
+            </Bouton>
+          </div>
+        }
+      >
+        <p className="text-[15px] leading-relaxed text-texte">
+          Les données actuelles seront remplacées par celles du fichier ({nombre(aRestaurer?.employees.length ?? 0, "fille")},{" "}
+          {nombre(aRestaurer?.shifts.length ?? 0, "jour")} d&apos;horaire, {nombre(Object.keys(aRestaurer?.repartitions ?? {}).length, "répartition")},{" "}
+          {nombre(aRestaurer?.messages?.length ?? 0, "message")}).
+        </p>
+      </Feuille>
 
       <Feuille
         ouverte={confirmer}

@@ -4,6 +4,7 @@ import { ChevronRight, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { BandeauInstallation, InstallationAuto } from "@/components/Installation";
+import { EcranRecuperation } from "@/components/EcranRecuperation";
 import { Chargement } from "@/components/shell";
 import { Avatar } from "@/components/ui";
 import { BASE, NOM_APPLI } from "@/config";
@@ -16,13 +17,14 @@ import type { Session } from "@/lib/types";
  * Bêta : pas encore de mot de passe, chacune choisit son nom.
  */
 export default function Accueil() {
-  const { pret, session, setSession, donnees } = useStore();
+  const { pret, session, setSession, donnees, attenteDonnees } = useStore();
   const router = useRouter();
 
   useEffect(() => {
     if (pret && session) router.replace(session.role === "gouvernante" ? "/planning/" : "/mes-taches/");
   }, [pret, session, router]);
 
+  if (pret && attenteDonnees) return <EcranRecuperation />;
   if (!pret || session) return <Chargement />;
 
   const choisir = (s: Session) => setSession(s);

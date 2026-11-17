@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { BASE, CODE_HOTEL, FIREBASE_URL, NOTIF_URL, PARTAGE_ACTIF, VAPID_PUBLIQUE } from "@/config";
+import { useStore } from "./store";
 import type { Message, Participant } from "./types";
 
 const CLE_PREF = "planiroom:notifications";
@@ -83,6 +84,7 @@ async function desabonnerPush(moi: Participant) {
 }
 
 export function useNotifications(moi: Participant | null) {
+  const { majProfil } = useStore();
   const [etat, setEtat] = useState<EtatNotif>("non-supporte");
   useEffect(() => {
     setEtat(lireEtat());
@@ -103,18 +105,24 @@ export function useNotifications(moi: Participant | null) {
       try {
         localStorage.setItem(CLE_PREF, "1");
       } catch {}
-      if (moi) await abonnerPush(moi);
+      if (moi) {
+        majProfil(moi, (p) => ({ ...p, notifs: true }));
+        await abonnerPush(moi);
+      }
     }
     window.dispatchEvent(new Event("planiroom:notifications"));
-  }, [moi]);
+  }, [moi, majProfil]);
 
   const desactiver = useCallback(async () => {
     try {
       localStorage.setItem(CLE_PREF, "0");
     } catch {}
-    if (moi) await desabonnerPush(moi);
+    if (moi) {
+      majProfil(moi, (p) => ({ ...p, notifs: false }));
+      await desabonnerPush(moi);
+    }
     window.dispatchEvent(new Event("planiroom:notifications"));
-  }, [moi]);
+  }, [moi, majProfil]);
 
   return { etat, activer, desactiver };
 }

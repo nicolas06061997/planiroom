@@ -141,6 +141,22 @@ export interface Message {
   photo?: { id: string; l: number; h: number };
 }
 
+/**
+ * Réglages personnels de chaque personne, enregistrés avec les données partagées :
+ * ils reviennent même si le téléphone a été vidé (historique Chrome effacé, nouveau téléphone…).
+ */
+export interface Profil {
+  /** Couleur choisie (bouton palette). */
+  couleur?: string;
+  /** Photo de fond (id dans le rangement des photos) et flou. */
+  fondPhoto?: string;
+  fondFlou?: boolean;
+  /** Notifications activées par cette personne. */
+  notifs?: boolean;
+  /** Dernière lecture de chaque conversation (messages non lus). */
+  lus?: Record<string, string>;
+}
+
 export interface Donnees {
   version: number;
   employees: Employee[];
@@ -156,6 +172,8 @@ export interface Donnees {
   repartitions: Record<ISODate, Repartition>;
   conversations: Conversation[];
   messages: Message[];
+  /** Réglages personnels, par personne (id d'une fille ou "gouvernante"). */
+  profils: Record<Participant, Profil>;
 }
 
 export interface Session {

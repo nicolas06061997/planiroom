@@ -150,5 +150,6 @@ export function creerDonneesExemple(): Donnees {
     chambresDuJour: Object.fromEntries(jours.map((d) => [d, chambresPourDate(d)])),
     repartitions: {},
     ...conversationsExemple(),
+    profils: {},
   };
 }

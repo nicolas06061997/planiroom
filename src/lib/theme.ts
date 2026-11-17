@@ -67,6 +67,8 @@ export function changerTheme(hex: string) {
 export interface ReglageFond {
   /** Photo de fond (data URL, réduite), ou rien = fond doux par défaut. */
   photo?: string;
+  /** Id de la photo dans le rangement en ligne (pour la retrouver après un téléphone vidé). */
+  id?: string;
   flou: boolean;
 }
 

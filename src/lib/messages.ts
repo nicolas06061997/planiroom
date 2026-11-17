@@ -1,7 +1,8 @@
 /** Petites fonctions pour le chat (qui voit quoi, noms, messages non lus). */
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { useStore } from "./store";
 import { GOUVERNANTE, type Conversation, type Donnees, type Message, type Participant } from "./types";
 
 export function nomParticipant(d: Donnees, p: Participant): string {
@@ -44,49 +45,42 @@ export function dernierMessage(d: Donnees, conversationId: string): Message | un
   return dernier;
 }
 
-/* ---------- Lu / non lu (gardé sur le téléphone de chacune) ---------- */
+/* ---------- Lu / non lu (gardé dans le profil de chacune, donc en ligne) ---------- */
 
-const CLE_LUS = "planiroom:lus";
-
-function lireLus(): Record<string, string> {
-  try {
-    return JSON.parse(localStorage.getItem(CLE_LUS) ?? "{}");
-  } catch {
-    return {};
-  }
-}
+const ANCIENNE_CLE_LUS = "planiroom:lus";
 
 /** Date de dernière lecture de chaque conversation, pour la personne connectée. */
 export function useLus(moi: Participant | null) {
-  const [lus, setLus] = useState<Record<string, string>>({});
+  const { donnees, majProfil } = useStore();
+  const lus = (moi && donnees.profils?.[moi]?.lus) || {};
+
+  // Reprise unique des anciennes lectures gardées sur le téléphone.
   useEffect(() => {
-    const maj = () => setLus(lireLus());
-    maj();
-    window.addEventListener("storage", maj);
-    window.addEventListener("planiroom:lus", maj);
-    return () => {
-      window.removeEventListener("storage", maj);
-      window.removeEventListener("planiroom:lus", maj);
-    };
-  }, []);
+    if (!moi) return;
+    try {
+      const anciennes = JSON.parse(localStorage.getItem(ANCIENNE_CLE_LUS) ?? "{}") as Record<string, string>;
+      const miennes = Object.fromEntries(
+        Object.entries(anciennes)
+          .filter(([k]) => k.startsWith(`${moi}|`))
+          .map(([k, v]) => [k.slice(moi.length + 1), v])
+      );
+      if (Object.keys(miennes).length) majProfil(moi, (p) => ({ ...p, lus: { ...miennes, ...(p.lus ?? {}) } }));
+      localStorage.removeItem(ANCIENNE_CLE_LUS);
+    } catch {}
+  }, [moi, majProfil]);
 
   const marquerLu = useCallback(
     (conversationId: string) => {
       if (!moi) return;
-      const tous = lireLus();
-      tous[`${moi}|${conversationId}`] = new Date().toISOString();
-      try {
-        localStorage.setItem(CLE_LUS, JSON.stringify(tous));
-      } catch {}
-      window.dispatchEvent(new Event("planiroom:lus"));
+      majProfil(moi, (p) => ({ ...p, lus: { ...(p.lus ?? {}), [conversationId]: new Date().toISOString() } }));
     },
-    [moi]
+    [moi, majProfil]
   );
 
   const nonLus = useCallback(
     (d: Donnees, conversationId: string) => {
       if (!moi) return 0;
-      const depuis = lus[`${moi}|${conversationId}`] ?? "";
+      const depuis = lus[conversationId] ?? "";
       return d.messages.filter((m) => m.conversationId === conversationId && m.auteur !== moi && m.envoyeLe > depuis).length;
     },
     [lus, moi]

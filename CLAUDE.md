@@ -19,8 +19,8 @@ Le design s'inspire de l'appli Céline (carte d'accueil en dégradé, cartes tr�
   sur la ref `ccr-0b431f57-tu8ml3`, puis garder `main` identique. Le workflow ne se lance plus tout seul (workflow_dispatch uniquement).
 
 ## Exigences
-- Très beau, propre, professionnel. Police Inter, fond #F5F6F8, couleur principale #0F766E, orange = congés.
-- Téléphone d'abord, boutons ≥ 44 px, champs en 16 px (pas de zoom iPhone). Pas d'emoji : icônes lucide-react.
+- Très beau, propre, professionnel, rendu proche de Céline et de la maquette (terracotta, cartes arrondies). Police Inter. Congés en rose.
+- Téléphone d'abord, boutons ≥ 44 px, champs en 16 px (pas de zoom iPhone). Emojis dans les titres OK ; icônes lucide-react pour les boutons.
 - Doit marcher sur tous les téléphones : Tailwind **3** (pas 4 : il exige iOS 16.4+), cible iOS 15+ / Android.
   Pas de `dvh` sans repli, pas de `color-mix`, utiliser les classes de `globals.css` (`min-h-ecran`, `pb-nav`, `bottom-nav`, `verre`, `hero`).
 - Tout en français. Rien de payant sans accord de l'utilisateur.
@@ -44,6 +44,13 @@ Le design s'inspire de l'appli Céline (carte d'accueil en dégradé, cartes tr�
   `src/components/AlerteMessages.tsx` (bandeau si appli visible, notification si arrière-plan), `public/sw.js` (push + clic),
   `serveur/notifier.ts` (Web Push, à héberger ; `import * as webpush`). Push « appli fermée » seulement avec NOTIF_URL + VAPID_PUBLIQUE.
   Tests : Chromium headless refuse les notifications → `chromium.launch({ channel: "chromium" })`.
+- Ne rien perdre si le téléphone est vidé (historique Chrome effacé) : les données vivent dans Firebase ; réglages perso
+  (couleur, photo de fond, notifications, messages lus) dans `profils/<personne>` (`Profil`, `majProfil`, `RestaurerProfil`).
+  Téléphone vide + partage actif → `attenteDonnees` : écran `EcranRecuperation` au lieu des données d'exemple (qui écraseraient
+  les vraies). Sauvegarde / restauration JSON dans Réglages → Général.
+- Apparence : couleur par téléphone (`src/lib/theme.ts`, variables CSS `--c-*` posées par un script dans <head>, terracotta
+  par défaut), fond doux ou photo (`Apparence.tsx`). Les `Feuille` et l'écran d'installation passent par un portail (`document.body`).
+- Emojis autorisés (demande de l'utilisateur, comme Céline) dans les titres ; icônes lucide pour les boutons.
 - Répartition : `src/lib/repartition.ts` (charge / temps disponible, rotation des tâches pénibles sur 28 jours, étages groupés).
 - Lecture des captures : `serveur/lire-horaire.ts` (API Claude vision, à héberger à part), client `src/lib/lecture.ts` (démo sans LECTURE_URL).
 - Mises à jour : `public/version.json` écrit au build ; l'appli recharge une fois par version, sinon bandeau. SW `public/sw.js?v=VERSION`.

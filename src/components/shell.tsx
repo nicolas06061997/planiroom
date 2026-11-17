@@ -23,8 +23,9 @@ import { Marque } from "./Marque";
 import { useTotalNonLus } from "@/lib/messages";
 import { moiDe, useStore } from "@/lib/store";
 import { AlerteMessages } from "./AlerteMessages";
+import { EcranRecuperation } from "./EcranRecuperation";
 import { LigneNotifications } from "./CarteNotifications";
-import { FeuilleApparence, FondEcran } from "./Apparence";
+import { FeuilleApparence, FondEcran, RestaurerProfil } from "./Apparence";
 import { EcranInstallation, estInstallee } from "./Installation";
 import { Avatar, BoutonIcone, cx, Feuille } from "./ui";
 
@@ -293,7 +294,7 @@ function BandeauMiseAJour() {
 /* ---------- Enveloppe des écrans connectés ---------- */
 
 export function Coquille({ children }: { children: ReactNode }) {
-  const { pret, session } = useStore();
+  const { pret, session, attenteDonnees } = useStore();
   const router = useRouter();
   const pathname = usePathname();
   const pleinEcran = pathname.startsWith("/messages/conversation");
@@ -302,10 +303,12 @@ export function Coquille({ children }: { children: ReactNode }) {
     if (pret && !session) router.replace("/");
   }, [pret, session, router]);
 
+  if (pret && attenteDonnees) return <EcranRecuperation />;
   if (!pret || !session) return <Chargement />;
   return (
     <div className={cx("min-h-ecran relative isolate", !pleinEcran && "pb-nav")}>
       <FondEcran />
+      <RestaurerProfil />
       {children}
       {!pleinEcran && <BarreNavigation />}
       <AlerteMessages />

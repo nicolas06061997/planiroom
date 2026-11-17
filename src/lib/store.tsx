@@ -21,9 +21,10 @@ import {
 import { mondayOf } from "./dates";
 import { repartir } from "./repartition";
 import { conversationsExemple, creerDonneesExemple, DATA_VERSION, NOUVELLES_COULEURS } from "./sampleData";
+import { PARTAGE_ACTIF } from "@/config";
 import { renvoyerPhotosEnAttente } from "./photos";
 import { Synchro, type EtatSynchro } from "./sync";
-import { GOUVERNANTE, type CarteFille, type Donnees, type ISODate, type Message, type Participant, type Session, type Shift } from "./types";
+import { GOUVERNANTE, type CarteFille, type Donnees, type ISODate, type Message, type Participant, type Profil, type Session, type Shift } from "./types";
 
 const CLE_DONNEES = "planiroom:donnees";
 const CLE_SESSION = "planiroom:session";
@@ -54,6 +55,7 @@ export function normaliser(d: Donnees): Donnees {
     n.employees = n.employees.map((e) => ({ ...e, couleur: NOUVELLES_COULEURS[e.couleur.toLowerCase()] ?? e.couleur }));
   }
   if (!Array.isArray(n.conversations) || !Array.isArray(n.messages)) Object.assign(n, conversationsExemple());
+  if (!n.profils || typeof n.profils !== "object") n.profils = {};
   if (!n.conversations.some((c) => c.type === "groupe")) {
     n.conversations = [
       { id: "groupe", type: "groupe", nom: "Équipe", membres: [], creePar: GOUVERNANTE, creeeLe: new Date().toISOString() },
@@ -63,14 +65,21 @@ export function normaliser(d: Donnees): Donnees {
   return n;
 }
 
-function charger(): Donnees {
+/** Données gardées sur ce téléphone, ou null s'il n'y en a pas (premier lancement, téléphone vidé…). */
+function charger(): Donnees | null {
   const d = lire<Donnees>(CLE_DONNEES);
   if (d && d.version === DATA_VERSION) return normaliser(d);
-  return creerDonneesExemple();
+  return null;
 }
 
 interface StoreValue {
   pret: boolean;
+  /**
+   * Vrai quand le téléphone n'a plus rien en mémoire (historique effacé…) et que les
+   * données n'ont pas encore été récupérées en ligne : l'appli attend au lieu d'afficher
+   * des données d'exemple (qui risqueraient d'écraser les vraies).
+   */
+  attenteDonnees: boolean;
   /** Partage entre téléphones : local, connexion, partage, horsligne. */
   synchro: EtatSynchro;
   donnees: Donnees;
@@ -86,6 +95,10 @@ interface StoreValue {
   envoyerMessage: (conversationId: string, auteur: Participant, texte: string, photo?: Message["photo"]) => Message | null;
   /** Crée (ou retrouve) une conversation privée ; renvoie son id. */
   creerConversation: (membres: Participant[], creePar: Participant, nom?: string) => string;
+  /** Modifie les réglages personnels d'une personne (gardés en ligne). */
+  majProfil: (p: Participant, fn: (profil: Profil) => Profil) => void;
+  /** Remplace toutes les données (restauration d'une sauvegarde). */
+  restaurer: (d: Donnees) => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -95,14 +108,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [donnees, setDonnees] = useState<Donnees>(() => creerDonneesExemple());
   const [session, setSessionState] = useState<Session | null>(null);
   const [synchro, setSynchro] = useState<EtatSynchro>("local");
+  const [attenteDonnees, setAttenteDonnees] = useState(false);
   const sync = useRef<Synchro | null>(null);
 
   useEffect(() => {
-    const locales = charger();
+    const gardees = charger();
+    const locales = gardees ?? creerDonneesExemple();
     setDonnees(locales);
     setSessionState(lire<Session>(CLE_SESSION));
+    // Téléphone vidé + partage actif : on attend les vraies données en ligne.
+    if (!gardees && PARTAGE_ACTIF) setAttenteDonnees(true);
     setPret(true);
-    const s = new Synchro((d) => setDonnees(normaliser(d)), setSynchro);
+    const s = new Synchro((d) => setDonnees(normaliser(d)), setSynchro, () => setAttenteDonnees(false));
     sync.current = s;
     s.demarrer(locales);
     renvoyerPhotosEnAttente();
@@ -114,10 +131,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!pret) return;
+    if (!pret || attenteDonnees) return;
     ecrire(CLE_DONNEES, donnees);
     sync.current?.local(donnees);
-  }, [donnees, pret]);
+  }, [donnees, pret, attenteDonnees]);
 
   const setSession = useCallback((s: Session | null) => {
     setSessionState(s);
@@ -191,6 +208,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const majProfil = useCallback((p: Participant, fn: (profil: Profil) => Profil) => {
+    setDonnees((d) => ({ ...d, profils: { ...d.profils, [p]: fn(d.profils?.[p] ?? {}) } }));
+  }, []);
+
+  const restaurer = useCallback((d: Donnees) => {
+    setDonnees(normaliser({ ...d, version: DATA_VERSION }));
+  }, []);
+
   const reinitialiser = useCallback(() => {
     setDonnees(creerDonneesExemple());
   }, []);
@@ -235,6 +260,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<StoreValue>(
     () => ({
       pret,
+      attenteDonnees,
       synchro,
       donnees,
       session,
@@ -247,9 +273,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       reinitialiser,
       envoyerMessage,
       creerConversation,
+      majProfil,
+      restaurer,
     }),
     [
       pret,
+      attenteDonnees,
       synchro,
       donnees,
       session,
@@ -262,6 +291,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       reinitialiser,
       envoyerMessage,
       creerConversation,
+      majProfil,
+      restaurer,
     ]
   );
 

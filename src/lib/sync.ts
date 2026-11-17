@@ -56,6 +56,7 @@ export function versArbre(d: Donnees): Arbre {
       Object.entries(d.chambresDuJour).map(([date, l]) => [date, Object.fromEntries(l.map((c) => [c.chambreId, c.type]))])
     ),
     conversations: parId(d.conversations),
+    profils: d.profils ?? {},
     messages: d.messages.reduce<Arbre>((acc, m) => {
       (acc[m.conversationId] ??= {})[m.id] = m;
       return acc;
@@ -123,6 +124,7 @@ export function depuisArbre(a: Arbre): Donnees {
       ...sansOrdre(c),
       membres: tableau<string>(c.membres),
     })),
+    profils: (a.profils ?? {}) as Donnees["profils"],
     messages: Object.values<Arbre>(a.messages ?? {})
       .flatMap((parConv) => Object.values(parConv ?? {}) as Donnees["messages"])
       .sort((x, y) => x.envoyeLe.localeCompare(y.envoyeLe)),
@@ -131,7 +133,7 @@ export function depuisArbre(a: Arbre): Donnees {
 
 /* ---------- Découpage en petits morceaux ---------- */
 
-const PROFONDEUR_2 = ["employees", "chambres", "menages", "articlesLinge", "taches", "shifts", "envois", "chambresDuJour", "conversations"];
+const PROFONDEUR_2 = ["employees", "chambres", "menages", "articlesLinge", "taches", "shifts", "envois", "chambresDuJour", "conversations", "profils"];
 
 /** Transforme l'arbre en { "chemin": "valeur JSON" } au bon niveau de détail. */
 function aplatir(a: Arbre): Record<string, string> {
@@ -201,10 +203,21 @@ export class Synchro {
   private reconstructionDifferee = false;
   private demarre = false;
 
+  private pretSignale = false;
+  private locales: Donnees | null = null;
+
   constructor(
     private onDonnees: (d: Donnees) => void,
-    private onEtat: (e: EtatSynchro) => void
+    private onEtat: (e: EtatSynchro) => void,
+    /** Appelé une fois, dès que les données en ligne ont été lues avec succès. */
+    private onPret?: () => void
   ) {}
+
+  private signalerPret() {
+    if (this.pretSignale) return;
+    this.pretSignale = true;
+    this.onPret?.();
+  }
 
   /** Démarre avec les données déjà connues sur ce téléphone. */
   async demarrer(locales: Donnees) {
@@ -213,6 +226,7 @@ export class Synchro {
       return;
     }
     this.demarre = true;
+    this.locales = locales;
     this.base = aplatir(versArbre(locales));
     this.onEtat("connexion");
     try {
@@ -236,6 +250,7 @@ export class Synchro {
           await this.vider();
         } else this.reconstruire();
       }
+      this.signalerPret();
       this.onEtat("partage");
     } catch {
       this.onEtat("horsligne");
@@ -330,6 +345,13 @@ export class Synchro {
       if (distant && !this.occupe()) {
         this.brut = distant;
         this.reconstruire();
+      }
+      if (distant?.employees) this.signalerPret();
+      else if (!this.pretSignale && this.locales) {
+        // Base encore vide (premier téléphone, hors ligne au démarrage) : on la remplit maintenant.
+        this.brut = versArbre(this.locales);
+        const put = await fetch(URL_NOEUD, { method: "PUT", body: JSON.stringify(this.brut) });
+        if (put.ok) this.signalerPret();
       }
       this.onEtat("partage");
     } catch {
