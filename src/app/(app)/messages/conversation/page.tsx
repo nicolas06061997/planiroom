@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowUp, Lock, MessageCircle, Users } from "lucide-react";
+import { ArrowLeft, ArrowUp, ImagePlus, Lock, MessageCircle, Users, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Avatar, BoutonIcone, cx, EtatVide, Feuille } from "@/components/ui";
@@ -14,7 +14,11 @@ import {
   titreConversation,
   useLus,
 } from "@/lib/messages";
+import { preparerImage } from "@/lib/image";
+import { signalerMessage } from "@/lib/notifications";
+import { enregistrerPhoto, usePhoto } from "@/lib/photos";
 import { moiDe, useStore } from "@/lib/store";
+import type { Message } from "@/lib/types";
 
 export default function ConversationPage() {
   return (
@@ -37,6 +41,10 @@ function Conversation() {
   const { marquerLu } = useLus(moi);
   const [texte, setTexte] = useState("");
   const [membresOuverts, setMembresOuverts] = useState(false);
+  const [photo, setPhoto] = useState<{ src: string; l: number; h: number } | null>(null);
+  const [photoErreur, setPhotoErreur] = useState<string | null>(null);
+  const [agrandie, setAgrandie] = useState<string | null>(null);
+  const fichierRef = useRef<HTMLInputElement>(null);
   const finRef = useRef<HTMLDivElement>(null);
   const champRef = useRef<HTMLTextAreaElement>(null);
   const premierAffichage = useRef(true);
@@ -85,10 +93,29 @@ function Conversation() {
   }
 
   const membres = membresDe(donnees, conv);
+  const choisirPhoto = async (f: File | undefined) => {
+    if (!f) return;
+    setPhotoErreur(null);
+    try {
+      const img = await preparerImage(f, 1280, 0.75);
+      setPhoto({ src: img.apercu, l: img.largeur, h: img.hauteur });
+    } catch {
+      setPhotoErreur("Cette photo n'a pas pu être ouverte.");
+    }
+  };
+
   const envoyer = () => {
-    if (!texte.trim()) return;
-    envoyerMessage(id, moi, texte);
+    if (!texte.trim() && !photo) return;
+    let joint: Message["photo"];
+    if (photo) {
+      const pid = `ph${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      enregistrerPhoto(pid, photo.src);
+      joint = { id: pid, l: photo.l, h: photo.h };
+    }
+    const m = envoyerMessage(id, moi, texte, joint);
+    if (m) signalerMessage(m);
     setTexte("");
+    setPhoto(null);
     champRef.current?.focus();
   };
 
@@ -162,7 +189,8 @@ function Conversation() {
                       {nomParticipant(donnees, m.auteur)}
                     </p>
                   )}
-                  <p className="whitespace-pre-wrap break-words text-[15px] leading-snug">{m.texte}</p>
+                  {m.photo && <PhotoMessage photo={m.photo} onAgrandir={setAgrandie} />}
+                  {m.texte && <p className={cx("whitespace-pre-wrap break-words text-[15px] leading-snug", m.photo && "mt-1.5")}>{m.texte}</p>}
                   <p className={cx("mt-0.5 text-right text-[11px]", mien ? "text-white/70" : "text-pale")}>{heure(m.envoyeLe)}</p>
                 </div>
               </div>
@@ -174,6 +202,37 @@ function Conversation() {
 
       {/* Zone de saisie */}
       <div className="verre-blanc pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-black/5">
+        {(photo || photoErreur) && (
+          <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 pt-3">
+            {photo ? (
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.src} alt="Photo à envoyer" className="h-20 max-w-[8rem] rounded-2xl border border-bord object-cover shadow-carte" />
+                <button
+                  type="button"
+                  aria-label="Retirer la photo"
+                  onClick={() => setPhoto(null)}
+                  className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-encre text-white shadow-flottant"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-red-700">{photoErreur}</p>
+            )}
+            {photo && <p className="text-[13px] text-doux">Ajoutez un texte si vous voulez, puis envoyez.</p>}
+          </div>
+        )}
+        <input
+          ref={fichierRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            choisirPhoto(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
         <form
           className="mx-auto flex max-w-2xl items-end gap-2 px-3 py-2.5"
           onSubmit={(e) => {
@@ -181,12 +240,20 @@ function Conversation() {
             envoyer();
           }}
         >
+          <button
+            type="button"
+            aria-label="Ajouter une photo"
+            onClick={() => fichierRef.current?.click()}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-primaire transition hover:bg-primaire-clair active:scale-95"
+          >
+            <ImagePlus className="h-6 w-6" />
+          </button>
           <textarea
             ref={champRef}
             value={texte}
             onChange={(e) => setTexte(e.target.value)}
             rows={1}
-            placeholder="Écrire un message…"
+            placeholder="Message…"
             aria-label="Message"
             maxLength={2000}
             className="min-h-12 flex-1 resize-none rounded-3xl border border-bord bg-white px-4 py-3 text-base leading-snug text-encre outline-none transition placeholder:text-pale focus:border-primaire focus:ring-3 focus:ring-primaire/15"
@@ -194,13 +261,28 @@ function Conversation() {
           <button
             type="submit"
             aria-label="Envoyer"
-            disabled={!texte.trim()}
+            disabled={!texte.trim() && !photo}
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primaire text-white shadow-bouton transition active:scale-95 disabled:opacity-40 disabled:shadow-none"
           >
             <ArrowUp className="h-5.5 w-5.5" strokeWidth={2.5} />
           </button>
         </form>
       </div>
+
+      {agrandie && (
+        <div className="fixed inset-0 z-[70] flex animate-fondu items-center justify-center bg-black/95" role="dialog" aria-modal aria-label="Photo" onClick={() => setAgrandie(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={agrandie} alt="Photo" className="max-h-full max-w-full object-contain" />
+          <button
+            type="button"
+            aria-label="Fermer la photo"
+            onClick={() => setAgrandie(null)}
+            className="pt-safe absolute right-3 top-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+      )}
 
       <Feuille ouverte={membresOuverts} onFermer={() => setMembresOuverts(false)} titre={conv.type === "groupe" ? "Groupe de l'équipe" : "Conversation privée"}>
         {conv.type === "prive" && (
@@ -219,5 +301,30 @@ function Conversation() {
         </div>
       </Feuille>
     </div>
+  );
+}
+
+/** Photo dans une bulle : place réservée à la bonne taille, chargement, toucher pour agrandir. */
+function PhotoMessage({ photo, onAgrandir }: { photo: NonNullable<Message["photo"]>; onAgrandir: (src: string) => void }) {
+  const { src, echec } = usePhoto(photo.id);
+  const largeur = Math.min(240, photo.l);
+  const hauteur = Math.min(320, Math.round((largeur * photo.h) / Math.max(1, photo.l)));
+  return (
+    <button
+      type="button"
+      onClick={() => src && onAgrandir(src)}
+      className="-mx-1.5 -mt-0.5 block overflow-hidden rounded-2xl bg-black/5"
+      style={{ width: largeur, height: hauteur, maxWidth: "100%" }}
+      aria-label="Agrandir la photo"
+    >
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="Photo envoyée" className="h-full w-full object-cover" />
+      ) : (
+        <span className="flex h-full w-full items-center justify-center text-[13px] text-doux">
+          {echec ? "Photo indisponible" : <span className="h-6 w-6 animate-spin rounded-full border-2 border-primaire/20 border-t-primaire" />}
+        </span>
+      )}
+    </button>
   );
 }

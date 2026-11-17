@@ -134,8 +134,11 @@ export interface Message {
   id: string;
   conversationId: string;
   auteur: Participant;
+  /** Peut être vide si le message est une photo. */
   texte: string;
   envoyeLe: string;
+  /** Photo jointe (le contenu est rangé à part, voir src/lib/photos.ts). */
+  photo?: { id: string; l: number; h: number };
 }
 
 export interface Donnees {

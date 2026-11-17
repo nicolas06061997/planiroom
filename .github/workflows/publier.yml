@@ -35,6 +35,8 @@ jobs:
           NEXT_PUBLIC_FIREBASE_URL: ${{ vars.FIREBASE_URL }}
           NEXT_PUBLIC_CODE_HOTEL: ${{ vars.CODE_HOTEL }}
           NEXT_PUBLIC_LECTURE_URL: ${{ vars.LECTURE_URL }}
+          NEXT_PUBLIC_NOTIF_URL: ${{ vars.NOTIF_URL }}
+          NEXT_PUBLIC_VAPID_PUBLIQUE: ${{ vars.VAPID_PUBLIQUE }}
       - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:

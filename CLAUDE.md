@@ -38,6 +38,12 @@ Le design s'inspire de l'appli Céline (carte d'accueil en dégradé, cartes tr�
   tout le monde) + conversations privées (`membres`, visibles seulement par eux : `peutVoir()`). Participant = id d'une fille
   ou `"gouvernante"`. Messages synchronisés en `messages/<conversation>/<message>`. « Lu » gardé sur chaque téléphone
   (`planiroom:lus`). Limite : avec la base Firebase ouverte, la confidentialité n'est garantie que par l'appli (pas par la base).
+- Photos du chat : `src/lib/photos.ts`, rangées À PART (`photos/<CODE_HOTEL>/<id>` dans Firebase, IndexedDB sur le téléphone)
+  pour ne pas alourdir la synchro ; le message ne garde que `photo: {id, l, h}`.
+- Notifications : `src/lib/notifications.ts` (permission, abonnement push dans `push/<CODE>/<personne>/<id>`),
+  `src/components/AlerteMessages.tsx` (bandeau si appli visible, notification si arrière-plan), `public/sw.js` (push + clic),
+  `serveur/notifier.ts` (Web Push, à héberger ; `import * as webpush`). Push « appli fermée » seulement avec NOTIF_URL + VAPID_PUBLIQUE.
+  Tests : Chromium headless refuse les notifications → `chromium.launch({ channel: "chromium" })`.
 - Répartition : `src/lib/repartition.ts` (charge / temps disponible, rotation des tâches pénibles sur 28 jours, étages groupés).
 - Lecture des captures : `serveur/lire-horaire.ts` (API Claude vision, à héberger à part), client `src/lib/lecture.ts` (démo sans LECTURE_URL).
 - Mises à jour : `public/version.json` écrit au build ; l'appli recharge une fois par version, sinon bandeau. SW `public/sw.js?v=VERSION`.

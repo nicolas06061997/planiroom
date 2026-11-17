@@ -21,7 +21,16 @@ Dans GitHub : **Settings → Secrets and variables → Actions → Variables** :
 | `FIREBASE_URL` | `https://planiroom-xxxx-default-rtdb.europe-west1.firebasedatabase.app` |
 | `CODE_HOTEL`   | un code secret d'au moins 20 caractères                     |
 
-Règles Firebase : `{"rules":{"hotels":{"$code":{".read":"$code.length >= 20",".write":"$code.length >= 20"}}}}`
+Règles Firebase (données, photos du chat, abonnements aux notifications) :
+
+```json
+{"rules":{
+  "hotels":{"$code":{".read":"$code.length >= 20",".write":"$code.length >= 20"}},
+  "photos":{"$code":{".read":"$code.length >= 20",".write":"$code.length >= 20"}},
+  "push":{"$code":{".read":"$code.length >= 20",".write":"$code.length >= 20"}},
+  "push-envoyes":{"$code":{".read":"$code.length >= 20",".write":"$code.length >= 20"}}
+}}
+```
 
 Sans `FIREBASE_URL`, chaque téléphone garde ses propres données.
 
@@ -30,6 +39,14 @@ Sans `FIREBASE_URL`, chaque téléphone garde ses propres données.
 Le dossier `serveur/` contient le petit service qui lit les captures avec l'IA Claude.
 Il doit tourner chez un hébergeur de fonctions (la clé API doit rester secrète),
 puis son adresse va dans la variable `LECTURE_URL`. Sans elle : mode démo.
+
+## Notifications quand l'appli est fermée
+
+Le dossier `serveur/` contient aussi `notifier.ts`, qui envoie les notifications de messages
+(à héberger avec le service de lecture). Clés à créer une fois : `npx web-push generate-vapid-keys`.
+Chez l'hébergeur : `FIREBASE_URL`, `CODE_HOTEL`, `APP_URL`, `VAPID_PUBLIQUE`, `VAPID_PRIVEE`, `VAPID_CONTACT`.
+Dans GitHub (variables) : `NOTIF_URL` (adresse du service) et `VAPID_PUBLIQUE`.
+Sans eux, les notifications marchent seulement quand l'appli est ouverte ou en arrière-plan.
 
 ## Lancer sur un ordinateur
 

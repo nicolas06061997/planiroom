@@ -21,8 +21,9 @@ import {
 import { mondayOf } from "./dates";
 import { repartir } from "./repartition";
 import { conversationsExemple, creerDonneesExemple, DATA_VERSION } from "./sampleData";
+import { renvoyerPhotosEnAttente } from "./photos";
 import { Synchro, type EtatSynchro } from "./sync";
-import { GOUVERNANTE, type CarteFille, type Donnees, type ISODate, type Participant, type Session, type Shift } from "./types";
+import { GOUVERNANTE, type CarteFille, type Donnees, type ISODate, type Message, type Participant, type Session, type Shift } from "./types";
 
 const CLE_DONNEES = "planiroom:donnees";
 const CLE_SESSION = "planiroom:session";
@@ -78,7 +79,7 @@ interface StoreValue {
   modifierCartes: (date: ISODate, fn: (cartes: CarteFille[]) => CarteFille[]) => void;
   envoyerRepartition: (date: ISODate) => void;
   reinitialiser: () => void;
-  envoyerMessage: (conversationId: string, auteur: Participant, texte: string) => void;
+  envoyerMessage: (conversationId: string, auteur: Participant, texte: string, photo?: Message["photo"]) => Message | null;
   /** Crée (ou retrouve) une conversation privée ; renvoie son id. */
   creerConversation: (membres: Participant[], creePar: Participant, nom?: string) => string;
 }
@@ -100,7 +101,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const s = new Synchro((d) => setDonnees(normaliser(d)), setSynchro);
     sync.current = s;
     s.demarrer(locales);
-    return () => s.arreter();
+    renvoyerPhotosEnAttente();
+    window.addEventListener("online", renvoyerPhotosEnAttente);
+    return () => {
+      s.arreter();
+      window.removeEventListener("online", renvoyerPhotosEnAttente);
+    };
   }, []);
 
   useEffect(() => {
@@ -185,14 +191,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setDonnees(creerDonneesExemple());
   }, []);
 
-  const envoyerMessage = useCallback((conversationId: string, auteur: Participant, texte: string) => {
+  const envoyerMessage = useCallback((conversationId: string, auteur: Participant, texte: string, photo?: Message["photo"]) => {
     const t = texte.trim();
-    if (!t) return;
+    if (!t && !photo) return null;
     const id = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-    setDonnees((d) => ({
-      ...d,
-      messages: [...d.messages, { id, conversationId, auteur, texte: t.slice(0, 2000), envoyeLe: new Date().toISOString() }],
-    }));
+    const message: Message = {
+      id,
+      conversationId,
+      auteur,
+      texte: t.slice(0, 2000),
+      envoyeLe: new Date().toISOString(),
+      ...(photo ? { photo } : {}),
+    };
+    setDonnees((d) => ({ ...d, messages: [...d.messages, message] }));
+    return message;
   }, []);
 
   const creerConversation = useCallback(

@@ -3,6 +3,7 @@
 import { Check, ChevronRight, Lock, MessageCirclePlus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CarteNotifications } from "@/components/CarteNotifications";
 import { EnTete, Page } from "@/components/shell";
 import { Avatar, Bouton, Carte, CarteAccueil, Champ, classeInput, cx, EtatVide, Feuille, TitreSection } from "@/components/ui";
 import {
@@ -55,6 +56,8 @@ export default function MessagesPage() {
             Nouveau message
           </Bouton>
         </CarteAccueil>
+
+        <CarteNotifications className="mt-4" />
 
         {groupe && (
           <>
@@ -147,7 +150,7 @@ function LigneConversation({ c, moi, nonLus, onClick }: { c: Conversation; moi: 
         </span>
         <span className="mt-0.5 flex items-center gap-2">
           <span className={cx("min-w-0 flex-1 truncate text-[14px]", nonLus > 0 ? "font-medium text-encre" : "text-doux")}>
-            {dernier ? `${auteur} : ${dernier.texte}` : "Aucun message pour l'instant"}
+            {dernier ? `${auteur} : ${dernier.texte || (dernier.photo ? "Photo" : "")}` : "Aucun message pour l'instant"}
           </span>
           {nonLus > 0 ? (
             <span className="flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-primaire px-1.5 text-[11px] font-bold text-white">{nonLus}</span>

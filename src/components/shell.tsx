@@ -21,6 +21,8 @@ import { BASE, PARTAGE_ACTIF, VERSION } from "@/config";
 import { Marque } from "./Marque";
 import { useTotalNonLus } from "@/lib/messages";
 import { moiDe, useStore } from "@/lib/store";
+import { AlerteMessages } from "./AlerteMessages";
+import { LigneNotifications } from "./CarteNotifications";
 import { EcranInstallation, estInstallee } from "./Installation";
 import { Avatar, BoutonIcone, cx, Feuille } from "./ui";
 
@@ -187,6 +189,7 @@ export function MenuProfil() {
               <span className="block text-[13px] font-normal text-doux">Filles, chambres, tâches, durées</span>
             </LigneMenu>
           )}
+          <LigneNotifications />
           {!estInstallee() && (
             <LigneMenu
               icone={<Smartphone className="h-5 w-5" />}
@@ -306,6 +309,7 @@ export function Coquille({ children }: { children: ReactNode }) {
     <div className={cx("min-h-ecran", !pleinEcran && "pb-nav")}>
       {children}
       {!pleinEcran && <BarreNavigation />}
+      <AlerteMessages />
       <BandeauMiseAJour />
     </div>
   );

@@ -4,8 +4,9 @@
  */
 export async function preparerImage(
   fichier: File,
-  maxCote = 1600
-): Promise<{ base64: string; mediaType: "image/jpeg"; apercu: string }> {
+  maxCote = 1600,
+  qualite = 0.88
+): Promise<{ base64: string; mediaType: "image/jpeg"; apercu: string; largeur: number; hauteur: number }> {
   const url = URL.createObjectURL(fichier);
   try {
     const img = await new Promise<HTMLImageElement>((ok, ko) => {
@@ -23,8 +24,8 @@ export async function preparerImage(
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
-    return { base64: dataUrl.split(",")[1], mediaType: "image/jpeg", apercu: dataUrl };
+    const dataUrl = canvas.toDataURL("image/jpeg", qualite);
+    return { base64: dataUrl.split(",")[1], mediaType: "image/jpeg", apercu: dataUrl, largeur: canvas.width, hauteur: canvas.height };
   } finally {
     URL.revokeObjectURL(url);
   }

@@ -41,3 +41,35 @@ self.addEventListener("fetch", (e) => {
       .catch(() => caches.match(req).then((r) => r || caches.match(new URL("./", self.registration.scope).href)))
   );
 });
+
+// Notification envoyée par le service de notifications (appli fermée).
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { titre: "Housekeeping Infinit", corps: e.data ? e.data.text() : "" }; }
+  const base = new URL("./", self.registration.scope).pathname.replace(/\/$/, "");
+  e.waitUntil(
+    self.registration.showNotification(d.titre || "Nouveau message", {
+      body: d.corps || "",
+      icon: base + "/icon-192.png",
+      badge: base + "/icon-192.png",
+      tag: d.tag || "message",
+      data: { url: d.url || base + "/messages/" },
+    })
+  );
+});
+
+// Toucher la notification : ouvre (ou ramène) l'appli sur la bonne conversation.
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const cible = new URL((e.notification.data && e.notification.data.url) || "./", self.location.origin).href;
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((fenetres) => {
+      for (const f of fenetres) {
+        if (f.url.startsWith(self.registration.scope) && "focus" in f) {
+          return f.focus().then(() => ("navigate" in f ? f.navigate(cible) : undefined));
+        }
+      }
+      return self.clients.openWindow(cible);
+    })
+  );
+});

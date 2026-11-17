@@ -7,11 +7,19 @@
  * CODE_HOTEL : code secret de l'hôtel (au moins 20 caractères).
  *   Tous les téléphones qui ont ce code voient les mêmes données.
  * LECTURE_URL : adresse du service qui lit les captures Shifter avec l'IA.
+ * NOTIF_URL / VAPID_PUBLIQUE : notifications quand l'appli est fermée (voir plus bas).
  *   Vide = mode démo (un horaire d'exemple est proposé).
  */
 export const FIREBASE_URL = (process.env.NEXT_PUBLIC_FIREBASE_URL || "").replace(/\/$/, "");
 export const CODE_HOTEL = process.env.NEXT_PUBLIC_CODE_HOTEL || "hotel-casino-dinant-planiroom-2026";
 export const LECTURE_URL = process.env.NEXT_PUBLIC_LECTURE_URL || "";
+/**
+ * Notifications quand l'appli est fermée (« push ») :
+ * NOTIF_URL = adresse du petit service qui les envoie (dossier `serveur/`),
+ * VAPID_PUBLIQUE = sa clé publique. Vides = seulement les notifications quand l'appli est ouverte en arrière-plan.
+ */
+export const NOTIF_URL = process.env.NEXT_PUBLIC_NOTIF_URL || "";
+export const VAPID_PUBLIQUE = process.env.NEXT_PUBLIC_VAPID_PUBLIQUE || "";
 
 /** Nom de l'appli (affiché partout). */
 export const NOM_APPLI = "Housekeeping Infinit";
