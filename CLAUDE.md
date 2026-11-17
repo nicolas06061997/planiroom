@@ -53,6 +53,13 @@ Le design s'inspire de l'appli Céline (carte d'accueil en dégradé, cartes tr�
 - Emojis autorisés (demande de l'utilisateur, comme Céline) dans les titres ; icônes lucide pour les boutons.
 - Répartition : `src/lib/repartition.ts` (charge / temps disponible, rotation des tâches pénibles sur 28 jours, étages groupés).
 - Lecture des captures : `serveur/lire-horaire.ts` (API Claude vision, à héberger à part), client `src/lib/lecture.ts` (démo sans LECTURE_URL).
+- Sans internet : `scripts/precache.mjs` (lancé par `npm run build`) écrit `out/precache.json` ; `public/sw.js` télécharge
+  toute l'appli à l'installation, fichiers statiques depuis le téléphone, pages réseau 2,5 s puis téléphone
+  (accueil en secours SEULEMENT si aucun réseau, sinon écran mélangé).
+  Connu, sans effet visible : erreur React 418 occasionnelle quand une page est servie depuis le cache du téléphone
+  (React refait l'affichage tout seul). Le HTML servi est identique ; pas le script de thème ; startTransition au
+  chargement du store ne suffit pas. À creuser (une version de développement de react-dom casse le build). Bandeau `BandeauHorsLigne`,
+  horloge sur les messages pas encore envoyés (`enAttente` du store, alimenté par `Synchro`).
 - Mises à jour : `public/version.json` écrit au build ; l'appli recharge une fois par version, sinon bandeau. SW `public/sw.js?v=VERSION`.
 - Installation : `src/components/Installation.tsx` (iPhone Safari / WhatsApp → x-safari-https, Android → invite ou intent Chrome), « Plus tard » = 24 h.
 

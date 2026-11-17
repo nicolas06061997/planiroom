@@ -210,7 +210,9 @@ export class Synchro {
     private onDonnees: (d: Donnees) => void,
     private onEtat: (e: EtatSynchro) => void,
     /** Appelé une fois, dès que les données en ligne ont été lues avec succès. */
-    private onPret?: () => void
+    private onPret?: () => void,
+    /** Chemins pas encore confirmés par le serveur (ex. messages en attente d'envoi). */
+    private onAttente?: (chemins: Set<string>) => void
   ) {}
 
   private signalerPret() {
@@ -284,6 +286,7 @@ export class Synchro {
   }
 
   private enregistrerAttente() {
+    this.onAttente?.(new Set([...Object.keys(this.enVol), ...Object.keys(this.attente)]));
     try {
       const tout = { ...this.enVol, ...this.attente };
       if (Object.keys(tout).length) localStorage.setItem(CLE_ATTENTE, JSON.stringify(tout));

@@ -25,6 +25,9 @@ export async function lireCapture(params: {
     await new Promise((r) => setTimeout(r, 1400));
     return { jours: horaireDemo(params.lundi), demo: true };
   }
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return { jours: [], erreur: "Pas d'internet : la lecture des captures a besoin du réseau. Réessayez plus tard, ou saisissez à la main." };
+  }
   const res = await fetch(LECTURE_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

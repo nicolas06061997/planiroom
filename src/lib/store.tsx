@@ -10,6 +10,7 @@
  */
 import {
   createContext,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -82,6 +83,8 @@ interface StoreValue {
   attenteDonnees: boolean;
   /** Partage entre téléphones : local, connexion, partage, horsligne. */
   synchro: EtatSynchro;
+  /** Chemins pas encore envoyés (hors connexion), ex. `messages/<conversation>/<id>`. */
+  enAttente: Set<string>;
   donnees: Donnees;
   session: Session | null;
   setSession: (s: Session | null) => void;
@@ -109,17 +112,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [session, setSessionState] = useState<Session | null>(null);
   const [synchro, setSynchro] = useState<EtatSynchro>("local");
   const [attenteDonnees, setAttenteDonnees] = useState(false);
+  const [enAttente, setEnAttente] = useState<Set<string>>(() => new Set());
   const sync = useRef<Synchro | null>(null);
 
   useEffect(() => {
     const gardees = charger();
     const locales = gardees ?? creerDonneesExemple();
-    setDonnees(locales);
-    setSessionState(lire<Session>(CLE_SESSION));
-    // Téléphone vidé + partage actif : on attend les vraies données en ligne.
-    if (!gardees && PARTAGE_ACTIF) setAttenteDonnees(true);
-    setPret(true);
-    const s = new Synchro((d) => setDonnees(normaliser(d)), setSynchro, () => setAttenteDonnees(false));
+    // En « transition » : React finit d'afficher la page avant d'appliquer les données
+    // (sinon, quand la page arrive instantanément depuis le téléphone, les deux se percutent).
+    startTransition(() => {
+      setDonnees(locales);
+      setSessionState(lire<Session>(CLE_SESSION));
+      // Téléphone vidé + partage actif : on attend les vraies données en ligne.
+      if (!gardees && PARTAGE_ACTIF) setAttenteDonnees(true);
+      setPret(true);
+    });
+    const s = new Synchro((d) => setDonnees(normaliser(d)), setSynchro, () => setAttenteDonnees(false), setEnAttente);
     sync.current = s;
     s.demarrer(locales);
     renvoyerPhotosEnAttente();
@@ -262,6 +270,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pret,
       attenteDonnees,
       synchro,
+      enAttente,
       donnees,
       session,
       setSession,
@@ -280,6 +289,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pret,
       attenteDonnees,
       synchro,
+      enAttente,
       donnees,
       session,
       setSession,

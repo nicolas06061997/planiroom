@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowUp, ImagePlus, Lock, MessageCircle, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowUp, Clock, ImagePlus, Lock, MessageCircle, Users, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Avatar, BoutonIcone, cx, EtatVide, Feuille } from "@/components/ui";
@@ -36,7 +36,7 @@ const heure = (iso: string) => {
 function Conversation() {
   const id = useSearchParams().get("id") ?? "";
   const router = useRouter();
-  const { donnees, session, envoyerMessage } = useStore();
+  const { donnees, session, envoyerMessage, enAttente } = useStore();
   const moi = moiDe(session);
   const { marquerLu } = useLus(moi);
   const [texte, setTexte] = useState("");
@@ -191,7 +191,12 @@ function Conversation() {
                   )}
                   {m.photo && <PhotoMessage photo={m.photo} onAgrandir={setAgrandie} />}
                   {m.texte && <p className={cx("whitespace-pre-wrap break-words text-[15px] leading-snug", m.photo && "mt-1.5")}>{m.texte}</p>}
-                  <p className={cx("mt-0.5 text-right text-[11px]", mien ? "text-white/70" : "text-pale")}>{heure(m.envoyeLe)}</p>
+                  <p className={cx("mt-0.5 flex items-center justify-end gap-1 text-[11px]", mien ? "text-white/70" : "text-pale")}>
+                    {heure(m.envoyeLe)}
+                    {mien && enAttente.has(`messages/${id}/${m.id}`) && (
+                      <Clock className="h-3 w-3" aria-label="Pas encore envoyé (hors connexion)" />
+                    )}
+                  </p>
                 </div>
               </div>
             </Fragment>

@@ -23,6 +23,7 @@ import { Marque } from "./Marque";
 import { useTotalNonLus } from "@/lib/messages";
 import { moiDe, useStore } from "@/lib/store";
 import { AlerteMessages } from "./AlerteMessages";
+import { BandeauHorsLigne } from "./BandeauHorsLigne";
 import { EcranRecuperation } from "./EcranRecuperation";
 import { LigneNotifications } from "./CarteNotifications";
 import { FeuilleApparence, FondEcran, RestaurerProfil } from "./Apparence";
@@ -312,6 +313,7 @@ export function Coquille({ children }: { children: ReactNode }) {
       {children}
       {!pleinEcran && <BarreNavigation />}
       <AlerteMessages />
+      <BandeauHorsLigne pleinEcran={pleinEcran} />
       <BandeauMiseAJour />
     </div>
   );
