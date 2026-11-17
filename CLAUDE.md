@@ -16,7 +16,7 @@ Le design s'inspire de l'appli Céline (carte d'accueil en dégradé, cartes tr�
   Le développement se fait sur la branche de travail ; copier sur `main` quand l'utilisateur veut voir les changements.
   Attention : l'environnement GitHub `github-pages` n'autorise que la branche `ccr-0b431f57-tu8ml3` à publier
   (règle créée automatiquement). Pour publier : lancer le workflow `publier.yml` à la main (workflow_dispatch)
-  sur la ref `ccr-0b431f57-tu8ml3`, puis garder `main` identique. Un push sur `main` seul échoue à l'étape « publier ».
+  sur la ref `ccr-0b431f57-tu8ml3`, puis garder `main` identique. Le workflow ne se lance plus tout seul (workflow_dispatch uniquement).
 
 ## Exigences
 - Très beau, propre, professionnel. Police Inter, fond #F5F6F8, couleur principale #0F766E, orange = congés.
@@ -26,7 +26,7 @@ Le design s'inspire de l'appli Céline (carte d'accueil en dégradé, cartes tr�
 - Tout en français. Rien de payant sans accord de l'utilisateur.
 
 ## Technique
-- Next.js 15 en export statique (`output: "export"`), publié sur GitHub Pages par `.github/workflows/publier.yml` (branche `main`).
+- Next.js 15 en export statique (`output: "export"`), publié sur GitHub Pages par `.github/workflows/publier.yml` (lancé à la main).
   Pas de route serveur dans `src/app` ; pages à paramètre via `?date=` (`/repartition/?date=AAAA-MM-JJ`).
 - `src/config.ts` : FIREBASE_URL, CODE_HOTEL, LECTURE_URL, BASE (sous-dossier Pages), VERSION.
 - Données : `src/lib/store.tsx` (contexte React + localStorage `planiroom:donnees`), session locale `planiroom:session`.

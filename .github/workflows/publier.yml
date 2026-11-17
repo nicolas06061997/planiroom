@@ -1,10 +1,10 @@
-# Publie l'appli sur GitHub Pages à chaque modification de la branche main
-# (comme l'appli Céline). Adresse : https://<compte>.github.io/planiroom/
+# Publie l'appli sur GitHub Pages (comme l'appli Céline).
+# Adresse : https://<compte>.github.io/planiroom/
+# Lancement à la main (onglet Actions → « Publier l'appli » → Run workflow),
+# sur la branche autorisée par l'environnement github-pages.
 name: Publier l'appli
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
