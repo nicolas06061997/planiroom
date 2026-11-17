@@ -10,7 +10,10 @@ Le design s'inspire de l'appli Céline (carte d'accueil en dégradé, cartes tr�
 ## Décisions en attente (ne rien faire sans accord)
 - Firebase (partage entre téléphones) et publication : **seulement quand l'appli sera complètement terminée**,
   après réception de toutes les infos (liste des tâches avec fréquence et durée, vraies captures Shifter, etc.).
-  En attendant : continuer en mode local, ne pas proposer de créer le projet Firebase ni de publier.
+  En attendant : continuer en mode local, ne pas proposer de créer le projet Firebase.
+- Une **version d'essai** est publiée sur GitHub Pages (branche `main`, sans Firebase) pour que l'utilisateur
+  la teste sur son téléphone : https://nicolas06061997.github.io/planiroom/
+  Le développement se fait sur la branche de travail ; copier sur `main` quand l'utilisateur veut voir les changements.
 
 ## Exigences
 - Très beau, propre, professionnel. Police Inter, fond #F5F6F8, couleur principale #0F766E, orange = congés.
